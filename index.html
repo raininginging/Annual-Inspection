@@ -4,147 +4,94 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HNB Annual Inspection Form</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        input[type="text"], input[type="number"], input[type="date"], input[type="email"], select, textarea {
-            font-size: 16px !important; /* 防止 iOS 自动缩放 */
-        }
+        /* 手机端常规样式 */
+        input, select, textarea { font-size: 16px !important; }
+
+        /* 打印/导出 PDF 专用样式 (完全还原 Word 模板) */
         @media print {
+            body { background: white !important; color: black !important; font-size: 11pt; font-family: Arial, sans-serif; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            body { background: white; color: black; }
+            
+            .report-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; page-break-inside: avoid; }
+            .report-table th, .report-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; vertical-align: middle; }
+            .header-bg { background-color: #000 !important; color: #fff !important; font-weight: bold; text-align: center; }
+            .sub-header { background-color: #f2f2f2 !important; font-weight: bold; }
+        }
+
+        @media screen {
+            .print-only { display: none !important; }
         }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-24">
 
-    <!-- Header -->
-    <header class="bg-blue-700 text-white p-4 sticky top-0 z-50 shadow-md">
+    <!-- ================= 1. 手机端填写界面 (Screen View) ================= -->
+    <header class="bg-blue-700 text-white p-4 sticky top-0 z-50 shadow-md no-print">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-lg font-bold tracking-wide">HNB Annual Inspection Report</h1>
-            <span class="text-xs bg-blue-800 px-2 py-1 rounded text-blue-200">Mobile Edition</span>
+            <h1 class="text-lg font-bold">HNB Annual Inspection</h1>
+            <span class="text-xs bg-blue-800 px-2 py-1 rounded">Mobile Form</span>
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto p-4 space-y-6">
-
+    <main class="max-w-3xl mx-auto p-4 space-y-6 no-print">
         <form id="inspectionForm" class="space-y-6">
-
-            <!-- Basic Info & Inspector -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2 flex items-center">
-                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    1. Basic & Inspector Information
-                </h2>
+            
+            <!-- Inspector & Basic Info -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">1. Inspector & Date</h2>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Inspector Last Name</label>
-                        <input type="text" name="inspector_last_name" value="ZHANG" class="w-full border rounded-lg p-2.5 bg-slate-50 border-slate-300">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Last Name</label>
+                        <input type="text" id="inspector_last" value="ZHANG" class="w-full border rounded p-2 bg-slate-50">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Inspector First Name</label>
-                        <input type="text" name="inspector_first_name" value="Rui" class="w-full border rounded-lg p-2.5 bg-slate-50 border-slate-300">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">First Name</label>
+                        <input type="text" id="inspector_first" value="Rui" class="w-full border rounded p-2 bg-slate-50">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Date of Inspection</label>
-                    <input type="date" name="inspection_date" id="inspection_date" class="w-full border rounded-lg p-2.5 border-slate-300">
+                    <input type="date" id="inspection_date" class="w-full border rounded p-2">
                 </div>
             </div>
 
-            <!-- Tenants Info -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2 flex items-center">
-                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    2. Tenants Information
-                </h2>
+            <!-- Tenant Info -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">2. Tenant Information</h2>
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Tenant Last Name</label>
-                        <input type="text" name="tenant_last_name" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">First & Middle Names</label>
-                        <input type="text" name="tenant_first_name" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
+                    <input type="text" id="tenant_last" placeholder="Last Name" class="border rounded p-2">
+                    <input type="text" id="tenant_first" placeholder="First Name" class="border rounded p-2">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Daytime Phone #</label>
-                        <input type="text" name="phone_daytime" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Other Phone #</label>
-                        <input type="text" name="phone_other" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
+                    <input type="text" id="tenant_phone_day" placeholder="Daytime Phone #" class="border rounded p-2">
+                    <input type="text" id="tenant_phone_other" placeholder="Other Phone #" class="border rounded p-2">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Email</label>
-                    <input type="email" name="tenant_email" class="w-full border rounded-lg p-2.5 border-slate-300">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Adults #</label>
-                        <input type="number" name="num_adults" min="0" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Kids #</label>
-                        <input type="number" name="num_kids" min="0" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Pets #</label>
-                        <input type="number" name="num_pets" min="0" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Update Septic Services?</label>
-                        <select name="update_septic" class="w-full border rounded-lg p-2.5 border-slate-300 bg-white">
-                            <option value="NO">NO</option>
-                            <option value="YES">YES</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Pets Comments</label>
-                    <input type="text" name="pets_comments" class="w-full border rounded-lg p-2.5 border-slate-300">
+                <input type="email" id="tenant_email" placeholder="Email" class="w-full border rounded p-2">
+                <div class="grid grid-cols-3 gap-2">
+                    <input type="number" id="num_adults" placeholder="Adults #" class="border rounded p-2">
+                    <input type="number" id="num_kids" placeholder="Kids #" class="border rounded p-2">
+                    <input type="number" id="num_pets" placeholder="Pets #" class="border rounded p-2">
                 </div>
             </div>
 
-            <!-- Address & Building Details -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2 flex items-center">
-                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h5m-5 0V11m0 5h5"></path></svg>
-                    3. Address & Property Details
-                </h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Project No.</label>
-                        <input type="text" name="project_no" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Apt. / Site #</label>
-                        <input type="text" name="apt_site" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
+            <!-- Address & Building -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">3. Unit & Address Details</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="project_no" placeholder="Project No." class="border rounded p-2">
+                    <input type="text" id="apt_site" placeholder="Apt. / Site #" class="border rounded p-2">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Street # and Name</label>
-                    <input type="text" name="street_name" class="w-full border rounded-lg p-2.5 border-slate-300">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Municipality</label>
-                        <input type="text" name="municipality" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">NB Power Meter #</label>
-                        <input type="text" name="nb_power_meter" class="w-full border rounded-lg p-2.5 border-slate-300">
-                    </div>
+                <input type="text" id="street_name" placeholder="Street # and Name" class="w-full border rounded p-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="municipality" placeholder="Municipality" class="border rounded p-2">
+                    <input type="text" id="nb_power_meter" placeholder="NB Power Meter #" class="border rounded p-2">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Type of House</label>
-                    <select name="house_type" class="w-full border rounded-lg p-2.5 border-slate-300 bg-white">
+                    <select id="house_type" class="w-full border rounded p-2 bg-white">
                         <option value="Mini-home">Mini-home</option>
                         <option value="Bungalow">Bungalow</option>
                         <option value="Single Unit">Single Unit</option>
@@ -152,293 +99,204 @@
                         <option value="Other">Other</option>
                     </select>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Basement Exist?</label>
-                        <select name="basement_exist" class="w-full border rounded-lg p-2.5 border-slate-300 bg-white">
-                            <option value="NO">NO</option>
-                            <option value="YES">YES</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Basement Type</label>
-                        <select name="basement_type" class="w-full border rounded-lg p-2.5 border-slate-300 bg-white">
-                            <option value="N/A">N/A</option>
-                            <option value="Crawl Space">Crawl Space</option>
-                            <option value="Full Basement">Full Basement</option>
-                        </select>
-                    </div>
-                </div>
             </div>
 
-            <!-- Dynamic Checklist Component Function Target -->
-            <!-- Building Exterior -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h2 class="text-md font-bold text-blue-700">4. Building Exterior</h2>
-                    <span class="text-xs text-red-500 font-medium">* Take photos for Replace/Repair</span>
-                </div>
-                <div id="exterior-items" class="space-y-4"></div>
-            </div>
-
-            <!-- Building Interior -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h2 class="text-md font-bold text-blue-700">5. Building Interior & Insulation</h2>
-                </div>
-                <div id="interior-items" class="space-y-4"></div>
-                
-                <div class="border-t pt-3 space-y-3">
-                    <h3 class="text-sm font-bold text-slate-700">Insulation Info</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs text-slate-500">Basement Insulation</label>
-                            <select name="insulation_basement" class="w-full border rounded p-2 text-sm bg-white">
-                                <option value="N/A">N/A</option>
-                                <option value="8 ft">8 ft</option>
-                                <option value="4 ft down">4 ft down</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-500">Basement Type</label>
-                            <input type="text" name="insulation_basement_type" class="w-full border rounded p-2 text-sm">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs text-slate-500">Attic Insulation</label>
-                            <select name="insulation_attic" class="w-full border rounded p-2 text-sm bg-white">
-                                <option value="Fiberglass">Fiberglass</option>
-                                <option value="Loose">Loose</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-500">Attic Condition</label>
-                            <input type="text" name="insulation_attic_cond" class="w-full border rounded p-2 text-sm">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Plumbing -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">6. Plumbing</h2>
-                <div id="plumbing-items" class="space-y-4"></div>
-                
-                <div class="border-t pt-3 space-y-3">
-                    <h3 class="text-sm font-bold text-slate-700">Hot Water Tank Details</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="text" name="hwt_capacity" placeholder="Capacity" class="border rounded p-2 text-sm">
-                        <input type="date" name="hwt_date" class="border rounded p-2 text-sm">
-                        <select name="hwt_status" class="border rounded p-2 text-sm bg-white">
-                            <option value="Owned">Owned</option>
-                            <option value="Leased">Leased</option>
-                        </select>
-                        <input type="text" name="hwt_make" placeholder="Make" class="border rounded p-2 text-sm">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs text-slate-500">Water Leaks?</label>
-                            <select name="water_leaks" class="w-full border rounded p-2 text-sm bg-white">
-                                <option value="NO">NO</option>
-                                <option value="YES">YES</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-500">Water Test Collected?</label>
-                            <select name="water_test" class="w-full border rounded p-2 text-sm bg-white">
-                                <option value="NO">NO</option>
-                                <option value="YES">YES</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Electrical & Smoke Detectors -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">7. Electrical & Safety Devices</h2>
-                <div id="electrical-items" class="space-y-4"></div>
-
-                <div class="border-t pt-3 space-y-4">
-                    <h3 class="text-sm font-bold text-slate-700">Smoke Detectors (up to 3)</h3>
-                    <!-- Smoke Detector 1-3 Component -->
-                    <div id="smoke-detectors" class="space-y-4"></div>
-                </div>
-            </div>
-
-            <!-- Ventilation & Appliances -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">8. Ventilation & Appliances</h2>
-                <div id="ventilation-items" class="space-y-4"></div>
-
-                <div class="border-t pt-3 space-y-3">
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500">Visible Mold?</label>
-                            <select name="visible_mold" class="w-full border rounded p-2 text-sm bg-white">
-                                <option value="NO">NO</option>
-                                <option value="YES">YES</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500">Mold Location</label>
-                            <input type="text" name="mold_location" class="border rounded p-2 text-sm w-full">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="border-t pt-3 space-y-4">
-                    <h3 class="text-sm font-bold text-slate-700">Oven & Fridge Details</h3>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-2 border p-2 rounded bg-slate-50">
-                            <span class="text-xs font-bold text-slate-600 block">Oven</span>
-                            <input type="text" name="oven_serial" placeholder="Serial #" class="w-full border rounded p-1.5 text-xs">
-                            <input type="text" name="oven_model" placeholder="Model #" class="w-full border rounded p-1.5 text-xs">
-                            <input type="text" name="oven_make" placeholder="Make #" class="w-full border rounded p-1.5 text-xs">
-                            <textarea name="oven_comment" placeholder="Comment" class="w-full border rounded p-1.5 text-xs" rows="2"></textarea>
-                        </div>
-                        <div class="space-y-2 border p-2 rounded bg-slate-50">
-                            <span class="text-xs font-bold text-slate-600 block">Fridge</span>
-                            <input type="text" name="fridge_serial" placeholder="Serial #" class="w-full border rounded p-1.5 text-xs">
-                            <input type="text" name="fridge_model" placeholder="Model #" class="w-full border rounded p-1.5 text-xs">
-                            <input type="text" name="fridge_make" placeholder="Make #" class="w-full border rounded p-1.5 text-xs">
-                            <textarea name="fridge_comment" placeholder="Comment" class="w-full border rounded p-1.5 text-xs" rows="2"></textarea>
-                        </div>
-                    </div>
-                </div>
+            <!-- Dynamic Quick Checklist Buttons -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">4. Exterior & Interior Checks</h2>
+                <p class="text-xs text-slate-500">点击下方按钮可快速标记全合格：</p>
+                <button type="button" onclick="setAllGood()" class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1.5 rounded font-bold border border-emerald-300">一键设为全部 Good</button>
+                <div id="dynamic-checklist" class="space-y-3 pt-2"></div>
             </div>
 
             <!-- Sign Off -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-4">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">9. Final Sign Off</h2>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Notify Program Officer ASAP?</label>
-                    <select name="notify_officer" class="w-full border rounded-lg p-2.5 border-slate-300 bg-white">
-                        <option value="NO">NO</option>
-                        <option value="YES">YES</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Miscellaneous / Notes</label>
-                    <textarea name="miscellaneous" rows="3" class="w-full border rounded-lg p-2.5 border-slate-300"></textarea>
-                </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">5. Final Notes & Signature</h2>
+                <textarea id="miscellaneous" rows="3" placeholder="Miscellaneous / Comments..." class="w-full border rounded p-2"></textarea>
             </div>
-
         </form>
     </main>
 
-    <!-- Floating Action Button Bar -->
+    <!-- 底部悬浮生成按钮 -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-lg flex gap-3 max-w-3xl mx-auto no-print">
-        <button type="button" onclick="resetForm()" class="w-1/3 bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-sm hover:bg-slate-300 active:scale-95 transition">重置</button>
-        <button type="button" onclick="generateReport()" class="w-2/3 bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center">
-            生成巡检报告 (Print/PDF)
+        <button type="button" onclick="window.print()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center">
+            📄 生成并打印标准报告 (PDF)
         </button>
+    </div>
+
+
+    <!-- ================= 2. 打印/导出标准模板 (Print View) ================= -->
+    <div class="print-only max-w-4xl mx-auto p-4">
+        
+        <!-- Document Title Block -->
+        <table class="report-table">
+            <tr>
+                <td colspan="6" class="header-bg">Inspector:</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Last Name:</td>
+                <td id="p_insp_last">ZHANG</td>
+                <td class="font-bold">First Name:</td>
+                <td id="p_insp_first">Rui</td>
+                <td class="font-bold">Date:</td>
+                <td id="p_insp_date"></td>
+            </tr>
+            <tr>
+                <td colspan="6" class="header-bg">Tenants Information</td>
+            </tr>
+            <tr>
+                <td class="font-bold">Last Name:</td>
+                <td id="p_tenant_last"></td>
+                <td class="font-bold" colspan="2">First & Middle Names:</td>
+                <td id="p_tenant_first" colspan="2"></td>
+            </tr>
+            <tr>
+                <td class="font-bold">Daytime Phone #:</td>
+                <td id="p_tenant_phone_day"></td>
+                <td class="font-bold" colspan="2">Email:</td>
+                <td id="p_tenant_email" colspan="2"></td>
+            </tr>
+            <tr>
+                <td class="font-bold">Other Phone #:</td>
+                <td id="p_tenant_phone_other"></td>
+                <td class="font-bold" colspan="2">Update Septic Services:</td>
+                <td colspan="2">[  ] YES   [  ] NO</td>
+            </tr>
+            <tr>
+                <td class="font-bold"># of Occupants:</td>
+                <td colspan="2">Adults: <span id="p_adults"></span> | Kids: <span id="p_kids"></span></td>
+                <td class="font-bold"># of Pets:</td>
+                <td id="p_pets" colspan="2"></td>
+            </tr>
+        </table>
+
+        <!-- Address Block -->
+        <table class="report-table">
+            <tr>
+                <td colspan="4" class="font-bold bg-slate-100">Address of the unit</td>
+                <td class="font-bold">Project No:</td>
+                <td id="p_project_no"></td>
+            </tr>
+            <tr>
+                <td class="font-bold">Apt. / Site #:</td>
+                <td id="p_apt_site"></td>
+                <td class="font-bold">Street:</td>
+                <td id="p_street"></td>
+                <td class="font-bold">Municipality:</td>
+                <td id="p_municipality"></td>
+            </tr>
+            <tr>
+                <td class="font-bold">Type of House:</td>
+                <td id="p_house_type" colspan="3"></td>
+                <td class="font-bold">NB Power Meter #:</td>
+                <td id="p_meter"></td>
+            </tr>
+        </table>
+
+        <!-- Inspection Items Table -->
+        <table class="report-table">
+            <thead>
+                <tr class="header-bg">
+                    <td colspan="5">Building Exterior & Interior Checklist</td>
+                </tr>
+                <tr class="sub-header">
+                    <th style="width:30%;">Item</th>
+                    <th style="width:12%; text-align:center;">Good</th>
+                    <th style="width:12%; text-align:center;">Fair</th>
+                    <th style="width:16%; text-align:center;">Replace/Repair</th>
+                    <th style="width:30%;">Comments</th>
+                </tr>
+            </thead>
+            <tbody id="p_checklist_body">
+                <!-- JavaScript 将自动渲染行填充数据 -->
+            </tbody>
+        </table>
+
+        <!-- Sign Off Footer -->
+        <table class="report-table mt-4">
+            <tr>
+                <td class="font-bold" style="width:20%;">Inspector's Signature:</td>
+                <td style="width:50%;">____________________________________</td>
+                <td class="font-bold" style="width:10%;">Date:</td>
+                <td style="width:20%;" id="p_sign_date"></td>
+            </tr>
+        </table>
     </div>
 
     <!-- Script Block -->
     <script>
-        // Set default date to today
         document.getElementById('inspection_date').valueAsDate = new Date();
 
-        // Data Models based on Word Document
-        const exteriorItems = ["Roof", "Siding", "Eaves through", "Windows", "Foundation", "Surface Grading & Drainage", "Portable Well", "Well Cap", "Doors", "Decks/landings/ramps"];
-        const interiorItems = ["Stairs", "Handrail Downstairs", "Handrail Upstairs", "House Keeping", "Flooring", "Cabinets"];
-        const plumbingItems = ["Water Pump", "Water Treatment", "Shower Walls"];
-        const electricalItems = ["Heating System", "Elect Panel", "GFCI Outlets", "Lighting", "Security System / Intercom", "Fire Alarm System"];
-        const ventilationItems = ["HRV", "Outside Vents", "Filters", "Exhaust Fan", "Randon Dam", "Range Hood"];
+        const items = ["Roof", "Siding", "Eaves through", "Windows", "Foundation", "Doors", "Decks/landings/ramps", "Stairs", "Flooring", "Cabinets", "Plumbing", "Electrical", "Heating System"];
 
-        // Helper to render inspection checklist cards
-        function renderChecklist(items, containerId, hasPhoto = true) {
-            const container = document.getElementById(containerId);
-            items.forEach((item, index) => {
-                const itemKey = item.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                const html = `
-                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-sm text-slate-700">${item}</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <label class="flex items-center justify-center p-2 rounded bg-white border text-xs cursor-pointer has-[:checked]:bg-green-100 has-[:checked]:border-green-500">
-                                <input type="radio" name="status_${itemKey}" value="Good" checked class="hidden"> Good
-                            </label>
-                            <label class="flex items-center justify-center p-2 rounded bg-white border text-xs cursor-pointer has-[:checked]:bg-yellow-100 has-[:checked]:border-yellow-500">
-                                <input type="radio" name="status_${itemKey}" value="Fair" class="hidden"> Fair
-                            </label>
-                            <label class="flex items-center justify-center p-2 rounded bg-white border text-xs cursor-pointer has-[:checked]:bg-red-100 has-[:checked]:border-red-500">
-                                <input type="radio" name="status_${itemKey}" value="Replace/Repair" class="hidden"> Replace/Repair
-                            </label>
-                        </div>
-                        <input type="text" name="comment_${itemKey}" placeholder="Comments..." class="w-full border rounded p-2 text-xs bg-white">
-                        ${hasPhoto ? `
-                            <div class="flex items-center gap-2 pt-1">
-                                <label class="cursor-pointer inline-flex items-center text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded border border-blue-200">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h0.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    拍照/上传照片
-                                    <input type="file" accept="image/*" capture="environment" class="hidden" onchange="previewImage(this)">
-                                </label>
-                                <div class="image-preview flex gap-1"></div>
-                            </div>
-                        ` : ''}
+        // 动态加载检查项
+        const checklistContainer = document.getElementById('dynamic-checklist');
+        items.forEach((item, index) => {
+            const key = `item_${index}`;
+            const html = `
+                <div class="p-3 bg-slate-50 rounded border space-y-2">
+                    <span class="font-bold text-sm text-slate-700">${item}</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Good" checked> Good</label>
+                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Fair"> Fair</label>
+                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Replace/Repair"> Replace/Repair</label>
                     </div>
-                `;
-                container.insertAdjacentHTML('beforeend', html);
+                    <input type="text" id="${key}_comment" placeholder="Comments" class="w-full border rounded p-1 text-xs">
+                </div>
+            `;
+            checklistContainer.insertAdjacentHTML('beforeend', html);
+        });
+
+        function setAllGood() {
+            items.forEach((_, index) => {
+                const radios = document.getElementsByName(`item_${index}_status`);
+                if(radios.length) radios[0].checked = true;
             });
         }
 
-        // Render Smoke Detectors
-        function renderSmokeDetectors() {
-            const container = document.getElementById('smoke-detectors');
-            for (let i = 1; i <= 3; i++) {
-                const html = `
-                    <div class="p-3 bg-slate-50 rounded-lg border space-y-2 text-xs">
-                        <span class="font-bold text-slate-700">Smoke Detector #${i}</span>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" name="sd_${i}_loc" placeholder="Location" class="border rounded p-1.5 bg-white">
-                            <input type="text" name="sd_${i}_type" placeholder="Type" class="border rounded p-1.5 bg-white">
-                            <input type="date" name="sd_${i}_exp" class="border rounded p-1.5 bg-white">
-                            <select name="sd_${i}_battery" class="border rounded p-1.5 bg-white">
-                                <option value="">Battery Charged?</option>
-                                <option value="YES">YES</option>
-                                <option value="NO">NO</option>
-                            </select>
-                        </div>
-                    </div>
+        // 打印前把手机界面数据同步到标准表单
+        window.onbeforeprint = function() {
+            document.getElementById('p_insp_last').innerText = document.getElementById('inspector_last').value;
+            document.getElementById('p_insp_first').innerText = document.getElementById('inspector_first').value;
+            document.getElementById('p_insp_date').innerText = document.getElementById('inspection_date').value;
+            document.getElementById('p_sign_date').innerText = document.getElementById('inspection_date').value;
+            
+            document.getElementById('p_tenant_last').innerText = document.getElementById('tenant_last').value;
+            document.getElementById('p_tenant_first').innerText = document.getElementById('tenant_first').value;
+            document.getElementById('p_tenant_phone_day').innerText = document.getElementById('tenant_phone_day').value;
+            document.getElementById('p_tenant_phone_other').innerText = document.getElementById('tenant_phone_other').value;
+            document.getElementById('p_tenant_email').innerText = document.getElementById('tenant_email').value;
+            document.getElementById('p_adults').innerText = document.getElementById('num_adults').value;
+            document.getElementById('p_kids').innerText = document.getElementById('num_kids').value;
+            document.getElementById('p_pets').innerText = document.getElementById('num_pets').value;
+
+            document.getElementById('p_project_no').innerText = document.getElementById('project_no').value;
+            document.getElementById('p_apt_site').innerText = document.getElementById('apt_site').value;
+            document.getElementById('p_street').innerText = document.getElementById('street_name').value;
+            document.getElementById('p_municipality').innerText = document.getElementById('municipality').value;
+            document.getElementById('p_house_type').innerText = document.getElementById('house_type').value;
+            document.getElementById('p_meter').innerText = document.getElementById('nb_power_meter').value;
+
+            // 动态构建表格行
+            const tbody = document.getElementById('p_checklist_body');
+            tbody.innerHTML = '';
+            items.forEach((item, index) => {
+                const key = `item_${index}`;
+                const status = document.querySelector(`input[name="${key}_status"]:checked`)?.value || 'Good';
+                const comment = document.getElementById(`${key}_comment`)?.value || '';
+
+                const row = `
+                    <tr>
+                        <td>${item}</td>
+                        <td style="text-align:center;">${status === 'Good' ? '✓' : ''}</td>
+                        <td style="text-align:center;">${status === 'Fair' ? '✓' : ''}</td>
+                        <td style="text-align:center;">${status === 'Replace/Repair' ? '✓' : ''}</td>
+                        <td>${comment}</td>
+                    </tr>
                 `;
-                container.insertAdjacentHTML('beforeend', html);
-            }
-        }
-
-        // Photo Preview Logic
-        function previewImage(input) {
-            const previewContainer = input.parentElement.nextElementSibling;
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewContainer.innerHTML = `<img src="${e.target.result}" class="w-10 h-10 object-cover rounded border">`;
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        // Initialize UI Components
-        renderChecklist(exteriorItems, 'exterior-items');
-        renderChecklist(interiorItems, 'interior-items');
-        renderChecklist(plumbingItems, 'plumbing-items');
-        renderChecklist(electricalItems, 'electrical-items');
-        renderChecklist(ventilationItems, 'ventilation-items');
-        renderSmokeDetectors();
-
-        // Print/PDF Generation trigger
-        function generateReport() {
-            window.print();
-        }
-
-        function resetForm() {
-            if(confirm("确定要重置所有填写的表格数据吗？")) {
-                document.getElementById('inspectionForm').reset();
-            }
-        }
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        };
     </script>
 </body>
 </html>
