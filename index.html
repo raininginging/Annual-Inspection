@@ -1,23 +1,23 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HNB Annual Inspection Form</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf.js 生成 PDF 库 -->
+    <!-- html2pdf.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         input, select, textarea { font-size: 16px !important; }
 
-        /* 标准打印 / PDF 导出样式 */
+        /* Standard Print / PDF Template Styling */
         .pdf-template {
             font-size: 10pt;
             font-family: Arial, sans-serif;
             color: #000;
             background: #fff;
-            padding: 15px;
+            padding: 12px;
         }
         .report-table {
             width: 100%;
@@ -29,7 +29,7 @@
             padding: 4px 6px;
             text-align: left;
             vertical-align: middle;
-            font-size: 9pt;
+            font-size: 8.5pt;
         }
         .header-bg {
             background-color: #000 !important;
@@ -48,18 +48,18 @@
     <!-- Header -->
     <header class="bg-blue-700 text-white p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-lg font-bold">HNB Annual Inspection</h1>
+            <h1 class="text-lg font-bold">HNB Annual Inspection Report</h1>
             <span class="text-xs bg-blue-800 px-2 py-1 rounded">Mobile Form</span>
         </div>
     </header>
 
-    <!-- 手机端填写表单区域 -->
+    <!-- Mobile UI Form -->
     <main class="max-w-3xl mx-auto p-4 space-y-6">
         <form id="inspectionForm" class="space-y-6">
             
             <!-- Inspector & Basic Info -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">1. Inspector & Date</h2>
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">1. Inspector Information</h2>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Last Name</label>
@@ -80,24 +80,33 @@
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <h2 class="text-md font-bold text-blue-700 border-b pb-2">2. Tenant Information</h2>
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="tenant_last" placeholder="Last Name" class="border rounded p-2">
-                    <input type="text" id="tenant_first" placeholder="First Name" class="border rounded p-2">
+                    <input type="text" id="tenant_last" placeholder="Tenant Last Name" class="border rounded p-2">
+                    <input type="text" id="tenant_first" placeholder="First & Middle Names" class="border rounded p-2">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <input type="text" id="tenant_phone_day" placeholder="Daytime Phone #" class="border rounded p-2">
                     <input type="text" id="tenant_phone_other" placeholder="Other Phone #" class="border rounded p-2">
                 </div>
                 <input type="email" id="tenant_email" placeholder="Email" class="w-full border rounded p-2">
-                <div class="grid grid-cols-3 gap-2">
-                    <input type="number" id="num_adults" placeholder="Adults #" class="border rounded p-2">
-                    <input type="number" id="num_kids" placeholder="Kids #" class="border rounded p-2">
-                    <input type="number" id="num_pets" placeholder="Pets #" class="border rounded p-2">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="num_adults" placeholder="# of Adults" class="border rounded p-2">
+                    <input type="number" id="num_kids" placeholder="# of Kids" class="border rounded p-2">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="num_pets" placeholder="# of Pets" class="border rounded p-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Update Septic Services?</label>
+                        <select id="update_septic" class="w-full border rounded p-2 bg-white">
+                            <option value="NO">NO</option>
+                            <option value="YES">YES</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            <!-- Address & Building -->
+            <!-- Address & Building Details -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">3. Unit & Address Details</h2>
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">3. Unit & Building Details</h2>
                 <div class="grid grid-cols-2 gap-2">
                     <input type="text" id="project_no" placeholder="Project No." class="border rounded p-2">
                     <input type="text" id="apt_site" placeholder="Apt. / Site #" class="border rounded p-2">
@@ -107,57 +116,94 @@
                     <input type="text" id="municipality" placeholder="Municipality" class="border rounded p-2">
                     <input type="text" id="nb_power_meter" placeholder="NB Power Meter #" class="border rounded p-2">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Type of House</label>
-                    <select id="house_type" class="w-full border rounded p-2 bg-white">
-                        <option value="Mini-home">Mini-home</option>
-                        <option value="Bungalow">Bungalow</option>
-                        <option value="Single Unit">Single Unit</option>
-                        <option value="Duplex">Duplex</option>
-                        <option value="Other">Other</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Type of House</label>
+                        <select id="house_type" class="w-full border rounded p-2 bg-white">
+                            <option value="Mini-home">Mini-home</option>
+                            <option value="Bungalow">Bungalow</option>
+                            <option value="Single Unit">Single Unit</option>
+                            <option value="Duplex">Duplex</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Basement Exist?</label>
+                        <select id="basement_exist" class="w-full border rounded p-2 bg-white">
+                            <option value="NO">NO</option>
+                            <option value="YES">YES</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            <!-- Checklist -->
+            <!-- Dynamic Checklist Component -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <div class="flex justify-between items-center border-b pb-2">
-                    <h2 class="text-md font-bold text-blue-700">4. Inspection Items</h2>
-                    <button type="button" onclick="setAllGood()" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded font-bold border border-emerald-300">一键设为全 Good</button>
+                    <h2 class="text-md font-bold text-blue-700">4. Inspection Checklist</h2>
+                    <button type="button" onclick="setAllGood()" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded font-bold border border-emerald-300">Set All Good</button>
                 </div>
                 <div id="dynamic-checklist" class="space-y-3 pt-2"></div>
             </div>
 
-            <!-- Sign Off -->
+            <!-- Appliances -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">5. Final Notes</h2>
-                <textarea id="miscellaneous" rows="3" placeholder="Miscellaneous / Comments..." class="w-full border rounded p-2"></textarea>
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">5. Appliances Details</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-2 border p-2.5 rounded bg-slate-50">
+                        <span class="text-xs font-bold text-slate-700 block border-b pb-1">Oven</span>
+                        <input type="text" id="oven_serial" placeholder="Serial #" class="w-full border rounded p-1.5 text-xs">
+                        <input type="text" id="oven_model" placeholder="Model #" class="w-full border rounded p-1.5 text-xs">
+                        <input type="text" id="oven_make" placeholder="Make #" class="w-full border rounded p-1.5 text-xs">
+                    </div>
+                    <div class="space-y-2 border p-2.5 rounded bg-slate-50">
+                        <span class="text-xs font-bold text-slate-700 block border-b pb-1">Fridge</span>
+                        <input type="text" id="fridge_serial" placeholder="Serial #" class="w-full border rounded p-1.5 text-xs">
+                        <input type="text" id="fridge_model" placeholder="Model #" class="w-full border rounded p-1.5 text-xs">
+                        <input type="text" id="fridge_make" placeholder="Make #" class="w-full border rounded p-1.5 text-xs">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Notes & Sign Off -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
+                <h2 class="text-md font-bold text-blue-700 border-b pb-2">6. Final Notes & Sign Off</h2>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Notify Program Officer ASAP?</label>
+                    <select id="notify_officer" class="w-full border rounded p-2 bg-white">
+                        <option value="NO">NO</option>
+                        <option value="YES">YES</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Miscellaneous / Comments</label>
+                    <textarea id="miscellaneous" rows="3" placeholder="Additional notes..." class="w-full border rounded p-2"></textarea>
+                </div>
             </div>
         </form>
     </main>
 
-    <!-- 悬浮分享按钮 -->
+    <!-- Floating Share Button -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-lg flex gap-3 max-w-3xl mx-auto">
         <button type="button" id="shareBtn" onclick="sharePdfReport()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-            <span id="btnText">生成并导出/分享 PDF 报告</span>
+            <span id="btnText">Generate & Share PDF Report</span>
         </button>
     </div>
 
-
-    <!-- 隐藏的 PDF 生成模板（完全按 Word 结构排版） -->
+    <!-- Hidden Printable PDF Template (Identical to Word Form Structure) -->
     <div class="hidden">
         <div id="pdf-container" class="pdf-template">
             <table class="report-table">
                 <tr>
-                    <td colspan="6" class="header-bg">Inspector:</td>
+                    <td colspan="6" class="header-bg">Inspector Information</td>
                 </tr>
                 <tr>
                     <td class="font-bold">Last Name:</td>
                     <td id="p_insp_last">ZHANG</td>
                     <td class="font-bold">First Name:</td>
                     <td id="p_insp_first">Rui</td>
-                    <td class="font-bold">Date:</td>
+                    <td class="font-bold">Date of Inspection:</td>
                     <td id="p_insp_date"></td>
                 </tr>
                 <tr>
@@ -179,7 +225,7 @@
                     <td class="font-bold">Other Phone #:</td>
                     <td id="p_tenant_phone_other"></td>
                     <td class="font-bold" colspan="2">Update Septic Services:</td>
-                    <td colspan="2">[  ] YES   [  ] NO</td>
+                    <td id="p_septic" colspan="2">NO</td>
                 </tr>
                 <tr>
                     <td class="font-bold"># of Occupants:</td>
@@ -205,32 +251,54 @@
                 </tr>
                 <tr>
                     <td class="font-bold">Type of House:</td>
-                    <td id="p_house_type" colspan="3"></td>
-                    <td class="font-bold">NB Power Meter #:</td>
-                    <td id="p_meter"></td>
+                    <td id="p_house_type" colspan="2"></td>
+                    <td class="font-bold">Basement:</td>
+                    <td id="p_basement">NO</td>
+                    <td class="font-bold">Meter #: <span id="p_meter" class="font-normal"></span></td>
                 </tr>
             </table>
 
             <table class="report-table">
                 <thead>
                     <tr class="header-bg">
-                        <td colspan="5">Building Exterior & Interior Checklist</td>
+                        <td colspan="5">Building Inspection Checklist</td>
                     </tr>
                     <tr class="sub-header">
-                        <th style="width:30%;">Item</th>
-                        <th style="width:12%; text-align:center;">Good</th>
-                        <th style="width:12%; text-align:center;">Fair</th>
+                        <th style="width:32%;">Item</th>
+                        <th style="width:10%; text-align:center;">Good</th>
+                        <th style="width:10%; text-align:center;">Fair</th>
                         <th style="width:18%; text-align:center;">Replace/Repair</th>
-                        <th style="width:28%;">Comments</th>
+                        <th style="width:30%;">Comments</th>
                     </tr>
                 </thead>
                 <tbody id="p_checklist_body"></tbody>
             </table>
 
+            <table class="report-table">
+                <tr class="sub-header">
+                    <td colspan="4">Appliances Information</td>
+                </tr>
+                <tr>
+                    <td class="font-bold" style="width:15%;">Oven</td>
+                    <td>Serial: <span id="p_oven_s"></span> | Model: <span id="p_oven_m"></span> | Make: <span id="p_oven_mk"></span></td>
+                    <td class="font-bold" style="width:15%;">Fridge</td>
+                    <td>Serial: <span id="p_fridge_s"></span> | Model: <span id="p_fridge_m"></span> | Make: <span id="p_fridge_mk"></span></td>
+                </tr>
+            </table>
+
+            <table class="report-table" style="margin-top: 10px;">
+                <tr>
+                    <td class="font-bold" style="width:25%;">Notify Program Officer ASAP:</td>
+                    <td id="p_notify" style="width:15%;">NO</td>
+                    <td class="font-bold" style="width:15%;">Miscellaneous:</td>
+                    <td id="p_misc"></td>
+                </tr>
+            </table>
+
             <table class="report-table" style="margin-top: 15px;">
                 <tr>
-                    <td class="font-bold" style="width:25%;">Inspector's Signature:</td>
-                    <td style="width:45%;">____________________________________</td>
+                    <td class="font-bold" style="width:22%;">Inspector's Signature:</td>
+                    <td style="width:48%;">____________________________________</td>
                     <td class="font-bold" style="width:10%;">Date:</td>
                     <td style="width:20%;" id="p_sign_date"></td>
                 </tr>
@@ -238,13 +306,20 @@
         </div>
     </div>
 
-    <!-- JavaScript 脚本部分 -->
+    <!-- JavaScript Execution Block -->
     <script>
         document.getElementById('inspection_date').valueAsDate = new Date();
 
-        const items = ["Roof", "Siding", "Eaves through", "Windows", "Foundation", "Doors", "Decks/landings/ramps", "Stairs", "Flooring", "Cabinets", "Plumbing", "Electrical", "Heating System"];
+        const items = [
+            "Roof", "Siding", "Eaves through", "Windows", "Foundation", 
+            "Surface Grading & Drainage", "Portable Well", "Well Cap", "Doors", "Decks/landings/ramps",
+            "Stairs", "Handrail Downstairs", "Handrail Upstairs", "House Keeping", "Flooring", "Cabinets",
+            "Water Pump", "Water Treatment", "Shower Walls", "Hot Water Tank",
+            "Heating System", "Elect Panel", "GFCI Outlets", "Lighting", "Fire Alarm System", "Smoke Detector",
+            "HRV", "Outside Vents", "Filters", "Exhaust Fan", "Range Hood"
+        ];
 
-        // 渲染选项列表
+        // Render Quick Inspection Checklist
         const checklistContainer = document.getElementById('dynamic-checklist');
         items.forEach((item, index) => {
             const key = `item_${index}`;
@@ -256,7 +331,7 @@
                         <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Fair"> Fair</label>
                         <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Replace/Repair"> Replace/Repair</label>
                     </div>
-                    <input type="text" id="${key}_comment" placeholder="Comments" class="w-full border rounded p-1 text-xs">
+                    <input type="text" id="${key}_comment" placeholder="Comments" class="w-full border rounded p-1 text-xs bg-white">
                 </div>
             `;
             checklistContainer.insertAdjacentHTML('beforeend', html);
@@ -269,7 +344,7 @@
             });
         }
 
-        // 同步填报数据到 PDF 渲染层
+        // Map form values to PDF print template
         function updatePdfData() {
             document.getElementById('p_insp_last').innerText = document.getElementById('inspector_last').value;
             document.getElementById('p_insp_first').innerText = document.getElementById('inspector_first').value;
@@ -281,6 +356,7 @@
             document.getElementById('p_tenant_phone_day').innerText = document.getElementById('tenant_phone_day').value;
             document.getElementById('p_tenant_phone_other').innerText = document.getElementById('tenant_phone_other').value;
             document.getElementById('p_tenant_email').innerText = document.getElementById('tenant_email').value;
+            document.getElementById('p_septic').innerText = document.getElementById('update_septic').value;
             document.getElementById('p_adults').innerText = document.getElementById('num_adults').value;
             document.getElementById('p_kids').innerText = document.getElementById('num_kids').value;
             document.getElementById('p_pets').innerText = document.getElementById('num_pets').value;
@@ -290,7 +366,18 @@
             document.getElementById('p_street').innerText = document.getElementById('street_name').value;
             document.getElementById('p_municipality').innerText = document.getElementById('municipality').value;
             document.getElementById('p_house_type').innerText = document.getElementById('house_type').value;
+            document.getElementById('p_basement').innerText = document.getElementById('basement_exist').value;
             document.getElementById('p_meter').innerText = document.getElementById('nb_power_meter').value;
+
+            document.getElementById('p_oven_s').innerText = document.getElementById('oven_serial').value;
+            document.getElementById('p_oven_m').innerText = document.getElementById('oven_model').value;
+            document.getElementById('p_oven_mk').innerText = document.getElementById('oven_make').value;
+            document.getElementById('p_fridge_s').innerText = document.getElementById('fridge_serial').value;
+            document.getElementById('p_fridge_m').innerText = document.getElementById('fridge_model').value;
+            document.getElementById('p_fridge_mk').innerText = document.getElementById('fridge_make').value;
+
+            document.getElementById('p_notify').innerText = document.getElementById('notify_officer').value;
+            document.getElementById('p_misc').innerText = document.getElementById('miscellaneous').value;
 
             const tbody = document.getElementById('p_checklist_body');
             tbody.innerHTML = '';
@@ -312,16 +399,16 @@
             });
         }
 
-        // 核心功能：生成 PDF 并直接拉起系统原生分享菜单 (邮件等)
+        // Web Share API implementation for PDF export and mobile sharing
         async function sharePdfReport() {
             const btnText = document.getElementById('btnText');
-            btnText.innerText = "正在生成 PDF 报告...";
+            btnText.innerText = "Generating PDF...";
             
             updatePdfData();
             const element = document.getElementById('pdf-container');
 
             const opt = {
-                margin:       10,
+                margin:       8,
                 filename:     'Annual_Inspection_Report.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2 },
@@ -329,28 +416,24 @@
             };
 
             try {
-                // 生成 PDF 的 Blob 内存数据
                 const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
                 const file = new File([pdfBlob], 'Annual_Inspection_Report.pdf', { type: 'application/pdf' });
 
-                // 检查系统是否支持文件原生分享 (iOS/Android 手机端支持)
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         title: 'Annual Inspection Report',
-                        text: '请查收年度房屋巡检报告 PDF 附件。',
+                        text: 'Please find attached the completed Annual Inspection Report PDF.',
                         files: [file]
                     });
                 } else {
-                    // 如果在不支持 Web Share 的普通电脑浏览器打开，自动退化为直接下载 PDF
                     html2pdf().set(opt).from(element).save();
-                    alert("报告已下载为 PDF 文件（当前浏览器不支持直接唤起邮箱分享菜单）。");
+                    alert("PDF downloaded successfully. (Direct email sharing is only supported on mobile browsers).");
                 }
             } catch (error) {
-                console.error("生成或分享失败:", error);
-                alert("遇到错误，正为您直接下载 PDF 文件。");
+                console.error("Share failed:", error);
                 html2pdf().set(opt).from(element).save();
             } finally {
-                btnText.innerText = "生成并导出/分享 PDF 报告";
+                btnText.innerText = "Generate & Share PDF Report";
             }
         }
     </script>
