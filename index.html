@@ -6,41 +6,13 @@
     <title>HNB Annual Inspection Form</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Word Docx Templating Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.4/pizzip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+    
     <style>
         input, select, textarea { font-size: 16px !important; }
-
-        /* Standard Print / PDF Template Styling */
-        .pdf-template {
-            font-size: 10pt;
-            font-family: Arial, sans-serif;
-            color: #000;
-            background: #fff;
-            padding: 12px;
-        }
-        .report-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 8px;
-        }
-        .report-table th, .report-table td {
-            border: 1px solid #000;
-            padding: 4px 6px;
-            text-align: left;
-            vertical-align: middle;
-            font-size: 8.5pt;
-        }
-        .header-bg {
-            background-color: #000 !important;
-            color: #fff !important;
-            font-weight: bold;
-            text-align: center;
-        }
-        .sub-header {
-            background-color: #f2f2f2 !important;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-24">
@@ -53,7 +25,7 @@
         </div>
     </header>
 
-    <!-- Mobile UI Form -->
+    <!-- Form Section -->
     <main class="max-w-3xl mx-auto p-4 space-y-6">
         <form id="inspectionForm" class="space-y-6">
             
@@ -137,7 +109,7 @@
                 </div>
             </div>
 
-            <!-- Dynamic Checklist Component -->
+            <!-- Inspection Checklist -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <div class="flex justify-between items-center border-b pb-2">
                     <h2 class="text-md font-bold text-blue-700">4. Inspection Checklist</h2>
@@ -185,128 +157,13 @@
 
     <!-- Floating Share Button -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-lg flex gap-3 max-w-3xl mx-auto">
-        <button type="button" id="shareBtn" onclick="sharePdfReport()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center">
+        <button type="button" id="shareBtn" onclick="generateAndShareDocx()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-            <span id="btnText">Generate & Share PDF Report</span>
+            <span id="btnText">Generate & Share Word (.docx)</span>
         </button>
     </div>
 
-    <!-- Hidden Printable PDF Template (Identical to Word Form Structure) -->
-    <div class="hidden">
-        <div id="pdf-container" class="pdf-template">
-            <table class="report-table">
-                <tr>
-                    <td colspan="6" class="header-bg">Inspector Information</td>
-                </tr>
-                <tr>
-                    <td class="font-bold">Last Name:</td>
-                    <td id="p_insp_last">ZHANG</td>
-                    <td class="font-bold">First Name:</td>
-                    <td id="p_insp_first">Rui</td>
-                    <td class="font-bold">Date of Inspection:</td>
-                    <td id="p_insp_date"></td>
-                </tr>
-                <tr>
-                    <td colspan="6" class="header-bg">Tenants Information</td>
-                </tr>
-                <tr>
-                    <td class="font-bold">Last Name:</td>
-                    <td id="p_tenant_last"></td>
-                    <td class="font-bold" colspan="2">First & Middle Names:</td>
-                    <td id="p_tenant_first" colspan="2"></td>
-                </tr>
-                <tr>
-                    <td class="font-bold">Daytime Phone #:</td>
-                    <td id="p_tenant_phone_day"></td>
-                    <td class="font-bold" colspan="2">Email:</td>
-                    <td id="p_tenant_email" colspan="2"></td>
-                </tr>
-                <tr>
-                    <td class="font-bold">Other Phone #:</td>
-                    <td id="p_tenant_phone_other"></td>
-                    <td class="font-bold" colspan="2">Update Septic Services:</td>
-                    <td id="p_septic" colspan="2">NO</td>
-                </tr>
-                <tr>
-                    <td class="font-bold"># of Occupants:</td>
-                    <td colspan="2">Adults: <span id="p_adults"></span> | Kids: <span id="p_kids"></span></td>
-                    <td class="font-bold"># of Pets:</td>
-                    <td id="p_pets" colspan="2"></td>
-                </tr>
-            </table>
-
-            <table class="report-table">
-                <tr>
-                    <td colspan="4" class="font-bold bg-slate-100">Address of the unit</td>
-                    <td class="font-bold">Project No:</td>
-                    <td id="p_project_no"></td>
-                </tr>
-                <tr>
-                    <td class="font-bold">Apt. / Site #:</td>
-                    <td id="p_apt_site"></td>
-                    <td class="font-bold">Street:</td>
-                    <td id="p_street"></td>
-                    <td class="font-bold">Municipality:</td>
-                    <td id="p_municipality"></td>
-                </tr>
-                <tr>
-                    <td class="font-bold">Type of House:</td>
-                    <td id="p_house_type" colspan="2"></td>
-                    <td class="font-bold">Basement:</td>
-                    <td id="p_basement">NO</td>
-                    <td class="font-bold">Meter #: <span id="p_meter" class="font-normal"></span></td>
-                </tr>
-            </table>
-
-            <table class="report-table">
-                <thead>
-                    <tr class="header-bg">
-                        <td colspan="5">Building Inspection Checklist</td>
-                    </tr>
-                    <tr class="sub-header">
-                        <th style="width:32%;">Item</th>
-                        <th style="width:10%; text-align:center;">Good</th>
-                        <th style="width:10%; text-align:center;">Fair</th>
-                        <th style="width:18%; text-align:center;">Replace/Repair</th>
-                        <th style="width:30%;">Comments</th>
-                    </tr>
-                </thead>
-                <tbody id="p_checklist_body"></tbody>
-            </table>
-
-            <table class="report-table">
-                <tr class="sub-header">
-                    <td colspan="4">Appliances Information</td>
-                </tr>
-                <tr>
-                    <td class="font-bold" style="width:15%;">Oven</td>
-                    <td>Serial: <span id="p_oven_s"></span> | Model: <span id="p_oven_m"></span> | Make: <span id="p_oven_mk"></span></td>
-                    <td class="font-bold" style="width:15%;">Fridge</td>
-                    <td>Serial: <span id="p_fridge_s"></span> | Model: <span id="p_fridge_m"></span> | Make: <span id="p_fridge_mk"></span></td>
-                </tr>
-            </table>
-
-            <table class="report-table" style="margin-top: 10px;">
-                <tr>
-                    <td class="font-bold" style="width:25%;">Notify Program Officer ASAP:</td>
-                    <td id="p_notify" style="width:15%;">NO</td>
-                    <td class="font-bold" style="width:15%;">Miscellaneous:</td>
-                    <td id="p_misc"></td>
-                </tr>
-            </table>
-
-            <table class="report-table" style="margin-top: 15px;">
-                <tr>
-                    <td class="font-bold" style="width:22%;">Inspector's Signature:</td>
-                    <td style="width:48%;">____________________________________</td>
-                    <td class="font-bold" style="width:10%;">Date:</td>
-                    <td style="width:20%;" id="p_sign_date"></td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
-    <!-- JavaScript Execution Block -->
+    <!-- Script Block -->
     <script>
         document.getElementById('inspection_date').valueAsDate = new Date();
 
@@ -319,7 +176,7 @@
             "HRV", "Outside Vents", "Filters", "Exhaust Fan", "Range Hood"
         ];
 
-        // Render Quick Inspection Checklist
+        // Dynamic rendering of checklist items
         const checklistContainer = document.getElementById('dynamic-checklist');
         items.forEach((item, index) => {
             const key = `item_${index}`;
@@ -344,96 +201,109 @@
             });
         }
 
-        // Map form values to PDF print template
-        function updatePdfData() {
-            document.getElementById('p_insp_last').innerText = document.getElementById('inspector_last').value;
-            document.getElementById('p_insp_first').innerText = document.getElementById('inspector_first').value;
-            document.getElementById('p_insp_date').innerText = document.getElementById('inspection_date').value;
-            document.getElementById('p_sign_date').innerText = document.getElementById('inspection_date').value;
-            
-            document.getElementById('p_tenant_last').innerText = document.getElementById('tenant_last').value;
-            document.getElementById('p_tenant_first').innerText = document.getElementById('tenant_first').value;
-            document.getElementById('p_tenant_phone_day').innerText = document.getElementById('tenant_phone_day').value;
-            document.getElementById('p_tenant_phone_other').innerText = document.getElementById('tenant_phone_other').value;
-            document.getElementById('p_tenant_email').innerText = document.getElementById('tenant_email').value;
-            document.getElementById('p_septic').innerText = document.getElementById('update_septic').value;
-            document.getElementById('p_adults').innerText = document.getElementById('num_adults').value;
-            document.getElementById('p_kids').innerText = document.getElementById('num_kids').value;
-            document.getElementById('p_pets').innerText = document.getElementById('num_pets').value;
-
-            document.getElementById('p_project_no').innerText = document.getElementById('project_no').value;
-            document.getElementById('p_apt_site').innerText = document.getElementById('apt_site').value;
-            document.getElementById('p_street').innerText = document.getElementById('street_name').value;
-            document.getElementById('p_municipality').innerText = document.getElementById('municipality').value;
-            document.getElementById('p_house_type').innerText = document.getElementById('house_type').value;
-            document.getElementById('p_basement').innerText = document.getElementById('basement_exist').value;
-            document.getElementById('p_meter').innerText = document.getElementById('nb_power_meter').value;
-
-            document.getElementById('p_oven_s').innerText = document.getElementById('oven_serial').value;
-            document.getElementById('p_oven_m').innerText = document.getElementById('oven_model').value;
-            document.getElementById('p_oven_mk').innerText = document.getElementById('oven_make').value;
-            document.getElementById('p_fridge_s').innerText = document.getElementById('fridge_serial').value;
-            document.getElementById('p_fridge_m').innerText = document.getElementById('fridge_model').value;
-            document.getElementById('p_fridge_mk').innerText = document.getElementById('fridge_make').value;
-
-            document.getElementById('p_notify').innerText = document.getElementById('notify_officer').value;
-            document.getElementById('p_misc').innerText = document.getElementById('miscellaneous').value;
-
-            const tbody = document.getElementById('p_checklist_body');
-            tbody.innerHTML = '';
-            items.forEach((item, index) => {
-                const key = `item_${index}`;
-                const status = document.querySelector(`input[name="${key}_status"]:checked`)?.value || 'Good';
-                const comment = document.getElementById(`${key}_comment`)?.value || '';
-
-                const row = `
-                    <tr>
-                        <td>${item}</td>
-                        <td style="text-align:center;">${status === 'Good' ? '✓' : ''}</td>
-                        <td style="text-align:center;">${status === 'Fair' ? '✓' : ''}</td>
-                        <td style="text-align:center;">${status === 'Replace/Repair' ? '✓' : ''}</td>
-                        <td>${comment}</td>
-                    </tr>
-                `;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-        }
-
-        // Web Share API implementation for PDF export and mobile sharing
-        async function sharePdfReport() {
+        // Fetch template from GitHub repo, populate template data, and trigger Native Share
+        async function generateAndShareDocx() {
             const btnText = document.getElementById('btnText');
-            btnText.innerText = "Generating PDF...";
-            
-            updatePdfData();
-            const element = document.getElementById('pdf-container');
-
-            const opt = {
-                margin:       8,
-                filename:     'Annual_Inspection_Report.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+            btnText.innerText = "Loading Template...";
 
             try {
-                const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
-                const file = new File([pdfBlob], 'Annual_Inspection_Report.pdf', { type: 'application/pdf' });
+                // 1. Fetch template.docx from GitHub directory
+                const response = await fetch('./template.docx');
+                if (!response.ok) throw new Error("Could not load template.docx");
+                const content = await response.arrayBuffer();
 
+                btnText.innerText = "Generating Word File...";
+
+                // 2. Load zip content
+                const zip = new PizZip(content);
+                const doc = new window.docxtemplater(zip, {
+                    paragraphLoop: true,
+                    linebreaks: true,
+                });
+
+                // 3. Prepare payload mapping
+                const templateData = {
+                    inspector_last: document.getElementById('inspector_last').value,
+                    inspector_first: document.getElementById('inspector_first').value,
+                    inspection_date: document.getElementById('inspection_date').value,
+                    
+                    tenant_last: document.getElementById('tenant_last').value,
+                    tenant_first: document.getElementById('tenant_first').value,
+                    tenant_phone_day: document.getElementById('tenant_phone_day').value,
+                    tenant_phone_other: document.getElementById('tenant_phone_other').value,
+                    tenant_email: document.getElementById('tenant_email').value,
+                    update_septic: document.getElementById('update_septic').value,
+                    num_adults: document.getElementById('num_adults').value,
+                    num_kids: document.getElementById('num_kids').value,
+                    num_pets: document.getElementById('num_pets').value,
+
+                    project_no: document.getElementById('project_no').value,
+                    apt_site: document.getElementById('apt_site').value,
+                    street_name: document.getElementById('street_name').value,
+                    municipality: document.getElementById('municipality').value,
+                    house_type: document.getElementById('house_type').value,
+                    basement_exist: document.getElementById('basement_exist').value,
+                    nb_power_meter: document.getElementById('nb_power_meter').value,
+
+                    oven_serial: document.getElementById('oven_serial').value,
+                    oven_model: document.getElementById('oven_model').value,
+                    oven_make: document.getElementById('oven_make').value,
+                    fridge_serial: document.getElementById('fridge_serial').value,
+                    fridge_model: document.getElementById('fridge_model').value,
+                    fridge_make: document.getElementById('fridge_make').value,
+
+                    notify_officer: document.getElementById('notify_officer').value,
+                    miscellaneous: document.getElementById('miscellaneous').value,
+                };
+
+                // Add checklist item data to payload
+                items.forEach((item, index) => {
+                    const key = `item_${index}`;
+                    const status = document.querySelector(`input[name="${key}_status"]:checked`)?.value || 'Good';
+                    const comment = document.getElementById(`${key}_comment`)?.value || '';
+
+                    // Creates template keys like roof_g, roof_f, roof_r for tick marks
+                    const itemSlug = item.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    templateData[`${itemSlug}_g`] = status === 'Good' ? '✓' : '';
+                    templateData[`${itemSlug}_f`] = status === 'Fair' ? '✓' : '';
+                    templateData[`${itemSlug}_r`] = status === 'Replace/Repair' ? '✓' : '';
+                    templateData[`${itemSlug}_c`] = comment;
+                });
+
+                // 4. Render document
+                doc.render(templateData);
+
+                // 5. Generate output blob
+                const blob = doc.getZip().generate({
+                    type: "blob",
+                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                });
+
+                const fileName = `Annual_Inspection_${document.getElementById('apt_site').value || 'Report'}.docx`;
+                const file = new File([blob], fileName, { 
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+                });
+
+                // 6. Trigger Native Sharing API (Mobile share menu)
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         title: 'Annual Inspection Report',
-                        text: 'Please find attached the completed Annual Inspection Report PDF.',
+                        text: 'Please find attached the completed Annual Inspection Word document.',
                         files: [file]
                     });
                 } else {
-                    html2pdf().set(opt).from(element).save();
-                    alert("PDF downloaded successfully. (Direct email sharing is only supported on mobile browsers).");
+                    // Fallback download if on desktop browser
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = fileName;
+                    link.click();
+                    alert("Word document downloaded successfully. (Direct sharing menu is supported on mobile devices).");
                 }
             } catch (error) {
-                console.error("Share failed:", error);
-                html2pdf().set(opt).from(element).save();
+                console.error("Docx generation failed:", error);
+                alert("Error generating Word document. Please ensure template.docx is present in repository.");
             } finally {
-                btnText.innerText = "Generate & Share PDF Report";
+                btnText.innerText = "Generate & Share Word (.docx)";
             }
         }
     </script>
