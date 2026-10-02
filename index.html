@@ -209,100 +209,92 @@
             });
         }
 
-        // Generate Pure Word (.docx) document strictly matching original layout
         async function generateAndShareDocx() {
             const btnText = document.getElementById('btnText');
             btnText.innerText = "Generating Word File...";
 
             try {
+                if (typeof window.docx === 'undefined') {
+                    throw new Error("Docx library failed to load. Please check internet or refresh page.");
+                }
+
                 const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } = window.docx;
 
-                // Value helpers
                 const val = (id) => document.getElementById(id)?.value || '';
 
-                // Table border styles matching HNB form
                 const thinBorder = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
                 const borders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
 
-                const createCell = (text, widthPct, bold = false, align = AlignmentType.LEFT) => new TableCell({
+                // Cell Creator Function
+                const makeCell = (text, widthPct, bold = false, align = AlignmentType.LEFT, colSpan = 1) => new TableCell({
                     children: [new Paragraph({
                         alignment: align,
-                        children: [new TextRun({ text: text, bold: bold, size: 18, font: "Calibri" })]
+                        children: [new TextRun({ text: String(text || ''), bold: bold, size: 18, font: "Calibri" })]
                     })],
                     width: { size: widthPct, type: WidthType.PERCENTAGE },
+                    columnSpan: colSpan,
                     borders: borders
                 });
 
-                // Build Table Rows
                 const rows = [
-                    // Header
+                    // Header Title
                     new TableRow({
-                        children: [new TableCell({
-                            children: [new Paragraph({
-                                alignment: AlignmentType.CENTER,
-                                children: [new TextRun({ text: "ANNUAL INSPECTION FORM - HNB", bold: true, size: 24, font: "Calibri" })]
-                            })],
-                            columnSpan: 8,
-                            borders: borders
-                        })]
+                        children: [makeCell("ANNUAL INSPECTION FORM - HNB", 100, true, AlignmentType.CENTER, 10)]
                     }),
                     // Inspector
                     new TableRow({
                         children: [
-                            createCell("Inspector:", 15, true),
-                            createCell(`${val('inspector_first')} ${val('inspector_last')}`, 35),
-                            createCell("Date:", 15, true),
-                            createCell(val('inspection_date'), 35)
-                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                            makeCell("Inspector:", 15, true),
+                            makeCell(`${val('inspector_first')} ${val('inspector_last')}`, 35, false, AlignmentType.LEFT, 4),
+                            makeCell("Date:", 15, true),
+                            makeCell(val('inspection_date'), 35, false, AlignmentType.LEFT, 4)
+                        ]
                     }),
-                    // Tenant & Project
+                    // Tenant Info
                     new TableRow({
                         children: [
-                            createCell("Tenant Name:", 15, true),
-                            createCell(`${val('tenant_first')} ${val('tenant_last')}`, 35),
-                            createCell("Project No:", 15, true),
-                            createCell(val('project_no'), 35)
-                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
-                    }),
-                    new TableRow({
-                        children: [
-                            createCell("Day Phone:", 15, true),
-                            createCell(val('tenant_phone_day'), 35),
-                            createCell("Apt / Site #:", 15, true),
-                            createCell(val('apt_site'), 35)
-                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                            makeCell("Tenant Name:", 15, true),
+                            makeCell(`${val('tenant_first')} ${val('tenant_last')}`, 35, false, AlignmentType.LEFT, 4),
+                            makeCell("Project No:", 15, true),
+                            makeCell(val('project_no'), 35, false, AlignmentType.LEFT, 4)
+                        ]
                     }),
                     new TableRow({
                         children: [
-                            createCell("Street & Name:", 15, true),
-                            createCell(val('street_name'), 35),
-                            createCell("Municipality:", 15, true),
-                            createCell(val('municipality'), 35)
-                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                            makeCell("Day Phone:", 15, true),
+                            makeCell(val('tenant_phone_day'), 35, false, AlignmentType.LEFT, 4),
+                            makeCell("Apt / Site #:", 15, true),
+                            makeCell(val('apt_site'), 35, false, AlignmentType.LEFT, 4)
+                        ]
                     }),
                     new TableRow({
                         children: [
-                            createCell("Type of House:", 15, true),
-                            createCell(val('house_type'), 35),
-                            createCell("Basement:", 15, true),
-                            createCell(val('basement_exist'), 35)
-                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                            makeCell("Street Name:", 15, true),
+                            makeCell(val('street_name'), 35, false, AlignmentType.LEFT, 4),
+                            makeCell("Municipality:", 15, true),
+                            makeCell(val('municipality'), 35, false, AlignmentType.LEFT, 4)
+                        ]
                     }),
-                    // Table Header for Checklist
                     new TableRow({
                         children: [
-                            createCell("ITEM", 18, true), createCell("G", 4, true, AlignmentType.CENTER), createCell("F", 4, true, AlignmentType.CENTER), createCell("R", 4, true, AlignmentType.CENTER), createCell("COMMENTS", 20, true),
-                            createCell("ITEM", 18, true), createCell("G", 4, true, AlignmentType.CENTER), createCell("F", 4, true, AlignmentType.CENTER), createCell("R", 4, true, AlignmentType.CENTER), createCell("COMMENTS", 20, true)
-                        ].slice(0, 8) // split columns
+                            makeCell("Type of House:", 15, true),
+                            makeCell(val('house_type'), 35, false, AlignmentType.LEFT, 4),
+                            makeCell("Basement:", 15, true),
+                            makeCell(val('basement_exist'), 35, false, AlignmentType.LEFT, 4)
+                        ]
+                    }),
+                    // Table Header for 2 Columns Checklist
+                    new TableRow({
+                        children: [
+                            makeCell("ITEM", 16, true), makeCell("G", 4, true, AlignmentType.CENTER), makeCell("F", 4, true, AlignmentType.CENTER), makeCell("R", 4, true, AlignmentType.CENTER), makeCell("COMMENTS", 22, true),
+                            makeCell("ITEM", 16, true), makeCell("G", 4, true, AlignmentType.CENTER), makeCell("F", 4, true, AlignmentType.CENTER), makeCell("R", 4, true, AlignmentType.CENTER), makeCell("COMMENTS", 22, true)
+                        ]
                     })
                 ];
 
-                // Add 31 Checklist Items in 2-column format
+                // Render Checklist Items in 2 parallel columns
                 const half = Math.ceil(checklistItems.length / 2);
                 for (let i = 0; i < half; i++) {
-                    const item1 = checklistItems[i];
-                    const item2 = checklistItems[i + half];
-
                     const getStatus = (idx) => {
                         if (idx >= checklistItems.length) return { g:'', f:'', r:'', c:'' };
                         const st = document.querySelector(`input[name="item_${idx}_status"]:checked`)?.value || 'Good';
@@ -315,47 +307,55 @@
                         };
                     };
 
+                    const item1 = checklistItems[i];
                     const s1 = getStatus(i);
-                    const s2 = getStatus(i + half);
 
-                    const cells = [
-                        createCell(item1, 16), createCell(s1.g, 4, false, AlignmentType.CENTER), createCell(s1.f, 4, false, AlignmentType.CENTER), createCell(s1.r, 4, false, AlignmentType.CENTER), createCell(s1.c, 22),
-                    ];
+                    const idx2 = i + half;
+                    const item2 = idx2 < checklistItems.length ? checklistItems[idx2] : '';
+                    const s2 = getStatus(idx2);
 
-                    if (item2) {
-                        cells.push(createCell(item2, 16), createCell(s2.g, 4, false, AlignmentType.CENTER), createCell(s2.f, 4, false, AlignmentType.CENTER), createCell(s2.r, 4, false, AlignmentType.CENTER), createCell(s2.c, 22));
-                    } else {
-                        cells.push(createCell("", 16), createCell("", 4), createCell("", 4), createCell("", 4), createCell("", 22));
-                    }
+                    rows.push(new TableRow({
+                        children: [
+                            makeCell(item1, 16),
+                            makeCell(s1.g, 4, false, AlignmentType.CENTER),
+                            makeCell(s1.f, 4, false, AlignmentType.CENTER),
+                            makeCell(s1.r, 4, false, AlignmentType.CENTER),
+                            makeCell(s1.c, 22),
 
-                    rows.push(new TableRow({ children: cells }));
+                            makeCell(item2, 16),
+                            makeCell(s2.g, 4, false, AlignmentType.CENTER),
+                            makeCell(s2.f, 4, false, AlignmentType.CENTER),
+                            makeCell(s2.r, 4, false, AlignmentType.CENTER),
+                            makeCell(s2.c, 22)
+                        ]
+                    }));
                 }
 
-                // Add Appliances & Notes
+                // Add Appliance Details & Notes
                 rows.push(
                     new TableRow({
                         children: [
-                            createCell("Oven Serial / Model / Make:", 25, true),
-                            createCell(`${val('oven_serial')} / ${val('oven_model')} / ${val('oven_make')}`, 75)
-                        ].map(c => { c.columnSpan = c.width.size === 75 ? 7 : 1; return c; })
+                            makeCell("Oven Serial / Model / Make:", 25, true, AlignmentType.LEFT, 2),
+                            makeCell(`${val('oven_serial')} / ${val('oven_model')} / ${val('oven_make')}`, 75, false, AlignmentType.LEFT, 8)
+                        ]
                     }),
                     new TableRow({
                         children: [
-                            createCell("Fridge Serial / Model / Make:", 25, true),
-                            createCell(`${val('fridge_serial')} / ${val('fridge_model')} / ${val('fridge_make')}`, 75)
-                        ].map(c => { c.columnSpan = c.width.size === 75 ? 7 : 1; return c; })
+                            makeCell("Fridge Serial / Model / Make:", 25, true, AlignmentType.LEFT, 2),
+                            makeCell(`${val('fridge_serial')} / ${val('fridge_model')} / ${val('fridge_make')}`, 75, false, AlignmentType.LEFT, 8)
+                        ]
                     }),
                     new TableRow({
                         children: [
-                            createCell("Notify Officer ASAP?", 25, true),
-                            createCell(val('notify_officer'), 75)
-                        ].map(c => { c.columnSpan = c.width.size === 75 ? 7 : 1; return c; })
+                            makeCell("Notify Officer ASAP?", 25, true, AlignmentType.LEFT, 2),
+                            makeCell(val('notify_officer'), 75, false, AlignmentType.LEFT, 8)
+                        ]
                     }),
                     new TableRow({
                         children: [
-                            createCell("Miscellaneous / Comments:", 25, true),
-                            createCell(val('miscellaneous'), 75)
-                        ].map(c => { c.columnSpan = c.width.size === 75 ? 7 : 1; return c; })
+                            makeCell("Miscellaneous / Comments:", 25, true, AlignmentType.LEFT, 2),
+                            makeCell(val('miscellaneous'), 75, false, AlignmentType.LEFT, 8)
+                        ]
                     })
                 );
 
