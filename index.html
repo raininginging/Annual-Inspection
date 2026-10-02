@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HNB Annual Inspection Form</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Ultra-stable JS Libraries via unpkg CDN -->
-    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.min.js"></script>
-    <script src="https://unpkg.com/docxtemplater@3.37.11/build/docxtemplater.js"></script>
-    
+    <!-- docx.js Library for Pure JS Word Generation -->
+    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
     <style>
         input, select, textarea { font-size: 16px !important; }
     </style>
@@ -25,11 +22,11 @@
         </div>
     </header>
 
-    <!-- Form Section -->
+    <!-- Main Form -->
     <main class="max-w-3xl mx-auto p-4 space-y-6">
         <form id="inspectionForm" class="space-y-6">
             
-            <!-- Inspector & Basic Info -->
+            <!-- 1. Inspector -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <h2 class="text-md font-bold text-blue-700 border-b pb-2">1. Inspector Information</h2>
                 <div class="grid grid-cols-2 gap-3">
@@ -48,7 +45,7 @@
                 </div>
             </div>
 
-            <!-- Tenant Info -->
+            <!-- 2. Tenant -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <h2 class="text-md font-bold text-blue-700 border-b pb-2">2. Tenant Information</h2>
                 <div class="grid grid-cols-2 gap-3">
@@ -76,7 +73,7 @@
                 </div>
             </div>
 
-            <!-- Address & Building Details -->
+            <!-- 3. Details -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <h2 class="text-md font-bold text-blue-700 border-b pb-2">3. Unit & Building Details</h2>
                 <div class="grid grid-cols-2 gap-2">
@@ -109,7 +106,7 @@
                 </div>
             </div>
 
-            <!-- Inspection Checklist -->
+            <!-- 4. Checklist -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <div class="flex justify-between items-center border-b pb-2">
                     <h2 class="text-md font-bold text-blue-700">4. Inspection Checklist</h2>
@@ -118,7 +115,7 @@
                 <div id="dynamic-checklist" class="space-y-3 pt-2"></div>
             </div>
 
-            <!-- Appliances -->
+            <!-- 5. Appliances -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <h2 class="text-md font-bold text-blue-700 border-b pb-2">5. Appliances Details</h2>
                 <div class="grid grid-cols-2 gap-3">
@@ -137,7 +134,7 @@
                 </div>
             </div>
 
-            <!-- Final Notes & Sign Off -->
+            <!-- 6. Sign Off -->
             <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
                 <h2 class="text-md font-bold text-blue-700 border-b pb-2">6. Final Notes & Sign Off</h2>
                 <div>
@@ -163,11 +160,10 @@
         </button>
     </div>
 
-    <!-- Script Block -->
     <script>
         document.getElementById('inspection_date').valueAsDate = new Date();
 
-        const items = [
+        const checklistItems = [
             "Roof", "Siding", "Eaves through", "Windows", "Foundation", 
             "Surface Grading & Drainage", "Portable Well", "Well Cap", "Doors", "Decks/landings/ramps",
             "Stairs", "Handrail Downstairs", "Handrail Upstairs", "House Keeping", "Flooring", "Cabinets",
@@ -176,9 +172,8 @@
             "HRV", "Outside Vents", "Filters", "Exhaust Fan", "Range Hood"
         ];
 
-        // Dynamic rendering of checklist items
         const checklistContainer = document.getElementById('dynamic-checklist');
-        items.forEach((item, index) => {
+        checklistItems.forEach((item, index) => {
             const key = `item_${index}`;
             const html = `
                 <div class="p-3 bg-slate-50 rounded border space-y-2">
@@ -205,7 +200,7 @@
         }
 
         function setAllGood() {
-            items.forEach((_, index) => {
+            checklistItems.forEach((_, index) => {
                 const radios = document.getElementsByName(`item_${index}_status`);
                 if(radios.length) {
                     radios[0].checked = true;
@@ -214,97 +209,175 @@
             });
         }
 
-        // Helper function to safely get Docxtemplater object regardless of library export variant
-        function getDocxtemplaterClass() {
-            if (typeof window.docxtemplater !== 'undefined') return window.docxtemplater;
-            if (typeof window.Docxtemplater !== 'undefined') return window.Docxtemplater;
-            return null;
-        }
-
+        // Generate Pure Word (.docx) document strictly matching original layout
         async function generateAndShareDocx() {
             const btnText = document.getElementById('btnText');
-            btnText.innerText = "Loading Template...";
+            btnText.innerText = "Generating Word File...";
 
             try {
-                const DocxTemplaterClass = getDocxtemplaterClass();
-                if (typeof PizZip === 'undefined' || !DocxTemplaterClass) {
-                    throw new Error("JS Libraries are still loading or blocked. Please check mobile network or refresh.");
+                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } = window.docx;
+
+                // Value helpers
+                const val = (id) => document.getElementById(id)?.value || '';
+
+                // Table border styles matching HNB form
+                const thinBorder = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
+                const borders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+
+                const createCell = (text, widthPct, bold = false, align = AlignmentType.LEFT) => new TableCell({
+                    children: [new Paragraph({
+                        alignment: align,
+                        children: [new TextRun({ text: text, bold: bold, size: 18, font: "Calibri" })]
+                    })],
+                    width: { size: widthPct, type: WidthType.PERCENTAGE },
+                    borders: borders
+                });
+
+                // Build Table Rows
+                const rows = [
+                    // Header
+                    new TableRow({
+                        children: [new TableCell({
+                            children: [new Paragraph({
+                                alignment: AlignmentType.CENTER,
+                                children: [new TextRun({ text: "ANNUAL INSPECTION FORM - HNB", bold: true, size: 24, font: "Calibri" })]
+                            })],
+                            columnSpan: 8,
+                            borders: borders
+                        })]
+                    }),
+                    // Inspector
+                    new TableRow({
+                        children: [
+                            createCell("Inspector:", 15, true),
+                            createCell(`${val('inspector_first')} ${val('inspector_last')}`, 35),
+                            createCell("Date:", 15, true),
+                            createCell(val('inspection_date'), 35)
+                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                    }),
+                    // Tenant & Project
+                    new TableRow({
+                        children: [
+                            createCell("Tenant Name:", 15, true),
+                            createCell(`${val('tenant_first')} ${val('tenant_last')}`, 35),
+                            createCell("Project No:", 15, true),
+                            createCell(val('project_no'), 35)
+                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                    }),
+                    new TableRow({
+                        children: [
+                            createCell("Day Phone:", 15, true),
+                            createCell(val('tenant_phone_day'), 35),
+                            createCell("Apt / Site #:", 15, true),
+                            createCell(val('apt_site'), 35)
+                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                    }),
+                    new TableRow({
+                        children: [
+                            createCell("Street & Name:", 15, true),
+                            createCell(val('street_name'), 35),
+                            createCell("Municipality:", 15, true),
+                            createCell(val('municipality'), 35)
+                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                    }),
+                    new TableRow({
+                        children: [
+                            createCell("Type of House:", 15, true),
+                            createCell(val('house_type'), 35),
+                            createCell("Basement:", 15, true),
+                            createCell(val('basement_exist'), 35)
+                        ].map(c => { c.columnSpan = c.width.size === 35 ? 3 : 1; return c; })
+                    }),
+                    // Table Header for Checklist
+                    new TableRow({
+                        children: [
+                            createCell("ITEM", 18, true), createCell("G", 4, true, AlignmentType.CENTER), createCell("F", 4, true, AlignmentType.CENTER), createCell("R", 4, true, AlignmentType.CENTER), createCell("COMMENTS", 20, true),
+                            createCell("ITEM", 18, true), createCell("G", 4, true, AlignmentType.CENTER), createCell("F", 4, true, AlignmentType.CENTER), createCell("R", 4, true, AlignmentType.CENTER), createCell("COMMENTS", 20, true)
+                        ].slice(0, 8) // split columns
+                    })
+                ];
+
+                // Add 31 Checklist Items in 2-column format
+                const half = Math.ceil(checklistItems.length / 2);
+                for (let i = 0; i < half; i++) {
+                    const item1 = checklistItems[i];
+                    const item2 = checklistItems[i + half];
+
+                    const getStatus = (idx) => {
+                        if (idx >= checklistItems.length) return { g:'', f:'', r:'', c:'' };
+                        const st = document.querySelector(`input[name="item_${idx}_status"]:checked`)?.value || 'Good';
+                        const comm = document.getElementById(`item_${idx}_comment`)?.value || '';
+                        return {
+                            g: st === 'Good' ? '✓' : '',
+                            f: st === 'Fair' ? '✓' : '',
+                            r: st === 'Replace/Repair' ? '✓' : '',
+                            c: st === 'Not Inspected' && !comm ? 'N/A' : comm
+                        };
+                    };
+
+                    const s1 = getStatus(i);
+                    const s2 = getStatus(i + half);
+
+                    const cells = [
+                        createCell(item1, 16), createCell(s1.g, 4, false, AlignmentType.CENTER), createCell(s1.f, 4, false, AlignmentType.CENTER), createCell(s1.r, 4, false, AlignmentType.CENTER), createCell(s1.c, 22),
+                    ];
+
+                    if (item2) {
+                        cells.push(createCell(item2, 16), createCell(s2.g, 4, false, AlignmentType.CENTER), createCell(s2.f, 4, false, AlignmentType.CENTER), createCell(s2.r, 4, false, AlignmentType.CENTER), createCell(s2.c, 22));
+                    } else {
+                        cells.push(createCell("", 16), createCell("", 4), createCell("", 4), createCell("", 4), createCell("", 22));
+                    }
+
+                    rows.push(new TableRow({ children: cells }));
                 }
 
-                const templateUrl = new URL('template.docx', window.location.href).href + '?t=' + Date.now();
-                const response = await fetch(templateUrl);
-                if (!response.ok) {
-                    throw new Error(`Failed to download template.docx (HTTP Status: ${response.status})`);
-                }
+                // Add Appliances & Notes
+                rows.push(
+                    new TableRow({
+                        children: [
+                            createCell("Oven Serial / Model / Make:", 25, true),
+                            createCell(`${val('oven_serial')} / ${val('oven_model')} / ${val('oven_make')}`, 75)
+                        ].map(c => { c.columnSpan = c.width.size === 75 ? 7 : 1; return c; })
+                    }),
+                    new TableRow({
+                        children: [
+                            createCell("Fridge Serial / Model / Make:", 25, true),
+                            createCell(`${val('fridge_serial')} / ${val('fridge_model')} / ${val('fridge_make')}`, 75)
+                        ].map(c => { c.columnSpan = c.width.size === 75 ? 7 : 1; return c; })
+                    }),
+                    new TableRow({
+                        children: [
+                            createCell("Notify Officer ASAP?", 25, true),
+                            createCell(val('notify_officer'), 75)
+                        ].map(c => { c.columnSpan = c.width.size === 75 ? 7 : 1; return c; })
+                    }),
+                    new TableRow({
+                        children: [
+                            createCell("Miscellaneous / Comments:", 25, true),
+                            createCell(val('miscellaneous'), 75)
+                        ].map(c => { c.columnSpan = c.width.size === 75 ? 7 : 1; return c; })
+                    })
+                );
 
-                const blobData = await response.blob();
-                const arrayBuffer = await blobData.arrayBuffer();
-
-                btnText.innerText = "Generating Word File...";
-
-                const zip = new PizZip(arrayBuffer);
-                const doc = new DocxTemplaterClass(zip, {
-                    paragraphLoop: true,
-                    linebreaks: true,
+                const table = new Table({
+                    rows: rows,
+                    width: { size: 100, type: WidthType.PERCENTAGE }
                 });
 
-                const templateData = {
-                    inspector_last: document.getElementById('inspector_last').value || '',
-                    inspector_first: document.getElementById('inspector_first').value || '',
-                    inspection_date: document.getElementById('inspection_date').value || '',
-                    
-                    tenant_last: document.getElementById('tenant_last').value || '',
-                    tenant_first: document.getElementById('tenant_first').value || '',
-                    tenant_phone_day: document.getElementById('tenant_phone_day').value || '',
-                    tenant_phone_other: document.getElementById('tenant_phone_other').value || '',
-                    tenant_email: document.getElementById('tenant_email').value || '',
-                    update_septic: document.getElementById('update_septic').value || '',
-                    num_adults: document.getElementById('num_adults').value || '',
-                    num_kids: document.getElementById('num_kids').value || '',
-                    num_pets: document.getElementById('num_pets').value || '',
-
-                    project_no: document.getElementById('project_no').value || '',
-                    apt_site: document.getElementById('apt_site').value || '',
-                    street_name: document.getElementById('street_name').value || '',
-                    municipality: document.getElementById('municipality').value || '',
-                    house_type: document.getElementById('house_type').value || '',
-                    basement_exist: document.getElementById('basement_exist').value || '',
-                    nb_power_meter: document.getElementById('nb_power_meter').value || '',
-
-                    oven_serial: document.getElementById('oven_serial').value || '',
-                    oven_model: document.getElementById('oven_model').value || '',
-                    oven_make: document.getElementById('oven_make').value || '',
-                    fridge_serial: document.getElementById('fridge_serial').value || '',
-                    fridge_model: document.getElementById('fridge_model').value || '',
-                    fridge_make: document.getElementById('fridge_make').value || '',
-
-                    notify_officer: document.getElementById('notify_officer').value || '',
-                    miscellaneous: document.getElementById('miscellaneous').value || '',
-                };
-
-                // Checklist mapping
-                items.forEach((item, index) => {
-                    const key = `item_${index}`;
-                    const status = document.querySelector(`input[name="${key}_status"]:checked`)?.value || 'Good';
-                    const comment = document.getElementById(`${key}_comment`)?.value || '';
-
-                    const itemSlug = item.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                    
-                    templateData[`${itemSlug}_g`] = status === 'Good' ? '✓' : '';
-                    templateData[`${itemSlug}_f`] = status === 'Fair' ? '✓' : '';
-                    templateData[`${itemSlug}_r`] = status === 'Replace/Repair' ? '✓' : '';
-                    
-                    templateData[`${itemSlug}_c`] = status === 'Not Inspected' && !comment ? 'N/A' : comment;
+                const doc = new Document({
+                    sections: [{
+                        properties: {
+                            page: {
+                                margin: { top: 500, bottom: 500, left: 500, right: 500 }
+                            }
+                        },
+                        children: [table]
+                    }]
                 });
 
-                doc.render(templateData);
+                const outBlob = await Packer.toBlob(doc);
 
-                const outBlob = doc.getZip().generate({
-                    type: "blob",
-                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                });
-
-                const fileName = `Annual_Inspection_${document.getElementById('apt_site').value || 'Report'}.docx`;
+                const fileName = `Annual_Inspection_${val('apt_site') || 'Report'}.docx`;
                 const file = new File([outBlob], fileName, { 
                     type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
                 });
@@ -323,7 +396,7 @@
                 }
             } catch (error) {
                 console.error("Docx generation failed:", error);
-                alert("Error details:\n" + error.message);
+                alert("Error rendering Word document:\n" + error.message);
             } finally {
                 btnText.innerText = "Generate & Share Word (.docx)";
             }
