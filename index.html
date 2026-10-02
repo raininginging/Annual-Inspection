@@ -7,9 +7,9 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Word Docx Templating Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.4/pizzip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+    <!-- Ultra-stable JS Libraries via unpkg CDN -->
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.min.js"></script>
+    <script src="https://unpkg.com/docxtemplater@3.37.11/build/docxtemplater.js"></script>
     
     <style>
         input, select, textarea { font-size: 16px !important; }
@@ -195,7 +195,6 @@
             checklistContainer.insertAdjacentHTML('beforeend', html);
         });
 
-        // Auto write N/A when "Not Inspected" is chosen, or clear N/A when status changes
         function handleStatusChange(index, status) {
             const commentInput = document.getElementById(`item_${index}_comment`);
             if (status === 'Not Inspected') {
@@ -215,19 +214,27 @@
             });
         }
 
+        // Helper function to safely get Docxtemplater object regardless of library export variant
+        function getDocxtemplaterClass() {
+            if (typeof window.docxtemplater !== 'undefined') return window.docxtemplater;
+            if (typeof window.Docxtemplater !== 'undefined') return window.Docxtemplater;
+            return null;
+        }
+
         async function generateAndShareDocx() {
             const btnText = document.getElementById('btnText');
             btnText.innerText = "Loading Template...";
 
             try {
-                if (typeof PizZip === 'undefined' || typeof docxtemplater === 'undefined') {
-                    throw new Error("Docx JS libraries failed to load from CDN. Please refresh the page.");
+                const DocxTemplaterClass = getDocxtemplaterClass();
+                if (typeof PizZip === 'undefined' || !DocxTemplaterClass) {
+                    throw new Error("JS Libraries are still loading or blocked. Please check mobile network or refresh.");
                 }
 
                 const templateUrl = new URL('template.docx', window.location.href).href + '?t=' + Date.now();
                 const response = await fetch(templateUrl);
                 if (!response.ok) {
-                    throw new Error(`Failed to download template.docx (HTTP ${response.status})`);
+                    throw new Error(`Failed to download template.docx (HTTP Status: ${response.status})`);
                 }
 
                 const blobData = await response.blob();
@@ -236,7 +243,7 @@
                 btnText.innerText = "Generating Word File...";
 
                 const zip = new PizZip(arrayBuffer);
-                const doc = new window.docxtemplater(zip, {
+                const doc = new DocxTemplaterClass(zip, {
                     paragraphLoop: true,
                     linebreaks: true,
                 });
@@ -283,12 +290,10 @@
 
                     const itemSlug = item.toLowerCase().replace(/[^a-z0-9]/g, '_');
                     
-                    // Populate ticks only for Good / Fair / Replace/Repair
                     templateData[`${itemSlug}_g`] = status === 'Good' ? '✓' : '';
                     templateData[`${itemSlug}_f`] = status === 'Fair' ? '✓' : '';
                     templateData[`${itemSlug}_r`] = status === 'Replace/Repair' ? '✓' : '';
                     
-                    // Comment field gets "N/A" if Not Inspected or custom text
                     templateData[`${itemSlug}_c`] = status === 'Not Inspected' && !comment ? 'N/A' : comment;
                 });
 
