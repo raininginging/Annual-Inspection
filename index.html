@@ -183,108 +183,127 @@
             const html = `
                 <div class="p-3 bg-slate-50 rounded border space-y-2">
                     <span class="font-bold text-sm text-slate-700">${item}</span>
-                    <div class="grid grid-cols-3 gap-2">
-                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Good" checked> Good</label>
-                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Fair"> Fair</label>
-                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Replace/Repair"> Replace/Repair</label>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Good" onchange="handleStatusChange(${index}, 'Good')" checked> Good</label>
+                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Fair" onchange="handleStatusChange(${index}, 'Fair')"> Fair</label>
+                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Replace/Repair" onchange="handleStatusChange(${index}, 'Replace/Repair')"> Repair</label>
+                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer text-amber-700 font-medium"><input type="radio" name="${key}_status" value="Not Inspected" onchange="handleStatusChange(${index}, 'Not Inspected')"> Not Inspected</label>
                     </div>
-                    <input type="text" id="${key}_comment" placeholder="Comments" class="w-full border rounded p-1 text-xs bg-white">
+                    <input type="text" id="${key}_comment" placeholder="Comments" class="w-full border rounded p-1.5 text-xs bg-white">
                 </div>
             `;
             checklistContainer.insertAdjacentHTML('beforeend', html);
         });
 
+        // Auto write N/A when "Not Inspected" is chosen, or clear N/A when status changes
+        function handleStatusChange(index, status) {
+            const commentInput = document.getElementById(`item_${index}_comment`);
+            if (status === 'Not Inspected') {
+                commentInput.value = 'N/A';
+            } else if (commentInput.value.trim().toUpperCase() === 'N/A') {
+                commentInput.value = '';
+            }
+        }
+
         function setAllGood() {
             items.forEach((_, index) => {
                 const radios = document.getElementsByName(`item_${index}_status`);
-                if(radios.length) radios[0].checked = true;
+                if(radios.length) {
+                    radios[0].checked = true;
+                    handleStatusChange(index, 'Good');
+                }
             });
         }
 
-        // Fetch template from GitHub repo, populate template data, and trigger Native Share
         async function generateAndShareDocx() {
             const btnText = document.getElementById('btnText');
             btnText.innerText = "Loading Template...";
 
             try {
-                // 1. Fetch template.docx from GitHub directory
-                const response = await fetch('./template.docx');
-                if (!response.ok) throw new Error("Could not load template.docx");
-                const content = await response.arrayBuffer();
+                if (typeof PizZip === 'undefined' || typeof docxtemplater === 'undefined') {
+                    throw new Error("Docx JS libraries failed to load from CDN. Please refresh the page.");
+                }
+
+                const templateUrl = new URL('template.docx', window.location.href).href + '?t=' + Date.now();
+                const response = await fetch(templateUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to download template.docx (HTTP ${response.status})`);
+                }
+
+                const blobData = await response.blob();
+                const arrayBuffer = await blobData.arrayBuffer();
 
                 btnText.innerText = "Generating Word File...";
 
-                // 2. Load zip content
-                const zip = new PizZip(content);
+                const zip = new PizZip(arrayBuffer);
                 const doc = new window.docxtemplater(zip, {
                     paragraphLoop: true,
                     linebreaks: true,
                 });
 
-                // 3. Prepare payload mapping
                 const templateData = {
-                    inspector_last: document.getElementById('inspector_last').value,
-                    inspector_first: document.getElementById('inspector_first').value,
-                    inspection_date: document.getElementById('inspection_date').value,
+                    inspector_last: document.getElementById('inspector_last').value || '',
+                    inspector_first: document.getElementById('inspector_first').value || '',
+                    inspection_date: document.getElementById('inspection_date').value || '',
                     
-                    tenant_last: document.getElementById('tenant_last').value,
-                    tenant_first: document.getElementById('tenant_first').value,
-                    tenant_phone_day: document.getElementById('tenant_phone_day').value,
-                    tenant_phone_other: document.getElementById('tenant_phone_other').value,
-                    tenant_email: document.getElementById('tenant_email').value,
-                    update_septic: document.getElementById('update_septic').value,
-                    num_adults: document.getElementById('num_adults').value,
-                    num_kids: document.getElementById('num_kids').value,
-                    num_pets: document.getElementById('num_pets').value,
+                    tenant_last: document.getElementById('tenant_last').value || '',
+                    tenant_first: document.getElementById('tenant_first').value || '',
+                    tenant_phone_day: document.getElementById('tenant_phone_day').value || '',
+                    tenant_phone_other: document.getElementById('tenant_phone_other').value || '',
+                    tenant_email: document.getElementById('tenant_email').value || '',
+                    update_septic: document.getElementById('update_septic').value || '',
+                    num_adults: document.getElementById('num_adults').value || '',
+                    num_kids: document.getElementById('num_kids').value || '',
+                    num_pets: document.getElementById('num_pets').value || '',
 
-                    project_no: document.getElementById('project_no').value,
-                    apt_site: document.getElementById('apt_site').value,
-                    street_name: document.getElementById('street_name').value,
-                    municipality: document.getElementById('municipality').value,
-                    house_type: document.getElementById('house_type').value,
-                    basement_exist: document.getElementById('basement_exist').value,
-                    nb_power_meter: document.getElementById('nb_power_meter').value,
+                    project_no: document.getElementById('project_no').value || '',
+                    apt_site: document.getElementById('apt_site').value || '',
+                    street_name: document.getElementById('street_name').value || '',
+                    municipality: document.getElementById('municipality').value || '',
+                    house_type: document.getElementById('house_type').value || '',
+                    basement_exist: document.getElementById('basement_exist').value || '',
+                    nb_power_meter: document.getElementById('nb_power_meter').value || '',
 
-                    oven_serial: document.getElementById('oven_serial').value,
-                    oven_model: document.getElementById('oven_model').value,
-                    oven_make: document.getElementById('oven_make').value,
-                    fridge_serial: document.getElementById('fridge_serial').value,
-                    fridge_model: document.getElementById('fridge_model').value,
-                    fridge_make: document.getElementById('fridge_make').value,
+                    oven_serial: document.getElementById('oven_serial').value || '',
+                    oven_model: document.getElementById('oven_model').value || '',
+                    oven_make: document.getElementById('oven_make').value || '',
+                    fridge_serial: document.getElementById('fridge_serial').value || '',
+                    fridge_model: document.getElementById('fridge_model').value || '',
+                    fridge_make: document.getElementById('fridge_make').value || '',
 
-                    notify_officer: document.getElementById('notify_officer').value,
-                    miscellaneous: document.getElementById('miscellaneous').value,
+                    notify_officer: document.getElementById('notify_officer').value || '',
+                    miscellaneous: document.getElementById('miscellaneous').value || '',
                 };
 
-                // Add checklist item data to payload
+                // Checklist mapping
                 items.forEach((item, index) => {
                     const key = `item_${index}`;
                     const status = document.querySelector(`input[name="${key}_status"]:checked`)?.value || 'Good';
                     const comment = document.getElementById(`${key}_comment`)?.value || '';
 
-                    // Creates template keys like roof_g, roof_f, roof_r for tick marks
                     const itemSlug = item.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    
+                    // Populate ticks only for Good / Fair / Replace/Repair
                     templateData[`${itemSlug}_g`] = status === 'Good' ? '✓' : '';
                     templateData[`${itemSlug}_f`] = status === 'Fair' ? '✓' : '';
                     templateData[`${itemSlug}_r`] = status === 'Replace/Repair' ? '✓' : '';
-                    templateData[`${itemSlug}_c`] = comment;
+                    
+                    // Comment field gets "N/A" if Not Inspected or custom text
+                    templateData[`${itemSlug}_c`] = status === 'Not Inspected' && !comment ? 'N/A' : comment;
                 });
 
-                // 4. Render document
                 doc.render(templateData);
 
-                // 5. Generate output blob
-                const blob = doc.getZip().generate({
+                const outBlob = doc.getZip().generate({
                     type: "blob",
                     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 });
 
                 const fileName = `Annual_Inspection_${document.getElementById('apt_site').value || 'Report'}.docx`;
-                const file = new File([blob], fileName, { 
+                const file = new File([outBlob], fileName, { 
                     type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
                 });
 
-                // 6. Trigger Native Sharing API (Mobile share menu)
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         title: 'Annual Inspection Report',
@@ -292,16 +311,14 @@
                         files: [file]
                     });
                 } else {
-                    // Fallback download if on desktop browser
                     const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
+                    link.href = URL.createObjectURL(outBlob);
                     link.download = fileName;
                     link.click();
-                    alert("Word document downloaded successfully. (Direct sharing menu is supported on mobile devices).");
                 }
             } catch (error) {
                 console.error("Docx generation failed:", error);
-                alert("Error generating Word document. Please ensure template.docx is present in repository.");
+                alert("Error details:\n" + error.message);
             } finally {
                 btnText.innerText = "Generate & Share Word (.docx)";
             }
