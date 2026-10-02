@@ -214,8 +214,8 @@
             btnText.innerText = "Generating Word File...";
 
             try {
-                if (typeof window.docx === 'undefined') {
-                    throw new Error("Docx library failed to load. Please check internet or refresh page.");
+                if (!window.docx) {
+                    throw new Error("docx library loading failed, please check network.");
                 }
 
                 const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } = window.docx;
@@ -225,81 +225,61 @@
                 const thinBorder = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
                 const borders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
 
-                // Cell Creator Function
-                const makeCell = (text, widthPct, bold = false, align = AlignmentType.LEFT, colSpan = 1) => new TableCell({
-                    children: [new Paragraph({
-                        alignment: align,
-                        children: [new TextRun({ text: String(text || ''), bold: bold, size: 18, font: "Calibri" })]
-                    })],
-                    width: { size: widthPct, type: WidthType.PERCENTAGE },
-                    columnSpan: colSpan,
-                    borders: borders
-                });
+                // Robust cell creator using DXA widths
+                const cell = (text, widthDxa, bold = false, align = AlignmentType.LEFT, span = 1) => {
+                    return new TableCell({
+                        children: [new Paragraph({
+                            alignment: align,
+                            children: [new TextRun({ text: String(text || ''), bold: bold, size: 18, font: "Calibri" })]
+                        })],
+                        width: { size: widthDxa, type: WidthType.DXA },
+                        columnSpan: span,
+                        borders: borders
+                    });
+                };
 
-                const rows = [
-                    // Header Title
-                    new TableRow({
-                        children: [makeCell("ANNUAL INSPECTION FORM - HNB", 100, true, AlignmentType.CENTER, 10)]
-                    }),
-                    // Inspector
-                    new TableRow({
-                        children: [
-                            makeCell("Inspector:", 15, true),
-                            makeCell(`${val('inspector_first')} ${val('inspector_last')}`, 35, false, AlignmentType.LEFT, 4),
-                            makeCell("Date:", 15, true),
-                            makeCell(val('inspection_date'), 35, false, AlignmentType.LEFT, 4)
-                        ]
-                    }),
-                    // Tenant Info
-                    new TableRow({
-                        children: [
-                            makeCell("Tenant Name:", 15, true),
-                            makeCell(`${val('tenant_first')} ${val('tenant_last')}`, 35, false, AlignmentType.LEFT, 4),
-                            makeCell("Project No:", 15, true),
-                            makeCell(val('project_no'), 35, false, AlignmentType.LEFT, 4)
-                        ]
-                    }),
-                    new TableRow({
-                        children: [
-                            makeCell("Day Phone:", 15, true),
-                            makeCell(val('tenant_phone_day'), 35, false, AlignmentType.LEFT, 4),
-                            makeCell("Apt / Site #:", 15, true),
-                            makeCell(val('apt_site'), 35, false, AlignmentType.LEFT, 4)
-                        ]
-                    }),
-                    new TableRow({
-                        children: [
-                            makeCell("Street Name:", 15, true),
-                            makeCell(val('street_name'), 35, false, AlignmentType.LEFT, 4),
-                            makeCell("Municipality:", 15, true),
-                            makeCell(val('municipality'), 35, false, AlignmentType.LEFT, 4)
-                        ]
-                    }),
-                    new TableRow({
-                        children: [
-                            makeCell("Type of House:", 15, true),
-                            makeCell(val('house_type'), 35, false, AlignmentType.LEFT, 4),
-                            makeCell("Basement:", 15, true),
-                            makeCell(val('basement_exist'), 35, false, AlignmentType.LEFT, 4)
-                        ]
-                    }),
-                    // Table Header for 2 Columns Checklist
-                    new TableRow({
-                        children: [
-                            makeCell("ITEM", 16, true), makeCell("G", 4, true, AlignmentType.CENTER), makeCell("F", 4, true, AlignmentType.CENTER), makeCell("R", 4, true, AlignmentType.CENTER), makeCell("COMMENTS", 22, true),
-                            makeCell("ITEM", 16, true), makeCell("G", 4, true, AlignmentType.CENTER), makeCell("F", 4, true, AlignmentType.CENTER), makeCell("R", 4, true, AlignmentType.CENTER), makeCell("COMMENTS", 22, true)
-                        ]
-                    })
-                ];
+                const rows = [];
 
-                // Render Checklist Items in 2 parallel columns
+                // Title
+                rows.push(new TableRow({
+                    children: [cell("ANNUAL INSPECTION FORM - HNB", 9600, true, AlignmentType.CENTER, 10)]
+                }));
+
+                // Info Rows (Total width = 9600 DXA)
+                const addInfoRow = (lbl1, val1, lbl2, val2) => {
+                    rows.push(new TableRow({
+                        children: [
+                            cell(lbl1, 1600, true),
+                            cell(val1, 3200, false, AlignmentType.LEFT, 4),
+                            cell(lbl2, 1600, true),
+                            cell(val2, 3200, false, AlignmentType.LEFT, 4)
+                        ]
+                    }));
+                };
+
+                addInfoRow("Inspector:", `${val('inspector_first')} ${val('inspector_last')}`, "Date:", val('inspection_date'));
+                addInfoRow("Tenant Name:", `${val('tenant_first')} ${val('tenant_last')}`, "Project No:", val('project_no'));
+                addInfoRow("Day Phone:", val('tenant_phone_day'), "Apt / Site #:", val('apt_site'));
+                addInfoRow("Street Name:", val('street_name'), "Municipality:", val('municipality'));
+                addInfoRow("Type of House:", val('house_type'), "Basement:", val('basement_exist'));
+
+                // Header for Checklist
+                rows.push(new TableRow({
+                    children: [
+                        cell("ITEM", 1600, true), cell("G", 400, true, AlignmentType.CENTER), cell("F", 400, true, AlignmentType.CENTER), cell("R", 400, true, AlignmentType.CENTER), cell("COMMENTS", 2000, true),
+                        cell("ITEM", 1600, true), cell("G", 400, true, AlignmentType.CENTER), cell("F", 400, true, AlignmentType.CENTER), cell("R", 400, true, AlignmentType.CENTER), cell("COMMENTS", 2000, true)
+                    ]
+                }));
+
+                // Checklist Items
                 const half = Math.ceil(checklistItems.length / 2);
                 for (let i = 0; i < half; i++) {
-                    const getStatus = (idx) => {
-                        if (idx >= checklistItems.length) return { g:'', f:'', r:'', c:'' };
+                    const getItemData = (idx) => {
+                        if (idx >= checklistItems.length) return { item: '', g: '', f: '', r: '', c: '' };
                         const st = document.querySelector(`input[name="item_${idx}_status"]:checked`)?.value || 'Good';
                         const comm = document.getElementById(`item_${idx}_comment`)?.value || '';
                         return {
+                            item: checklistItems[idx],
                             g: st === 'Good' ? '✓' : '',
                             f: st === 'Fair' ? '✓' : '',
                             r: st === 'Replace/Repair' ? '✓' : '',
@@ -307,61 +287,35 @@
                         };
                     };
 
-                    const item1 = checklistItems[i];
-                    const s1 = getStatus(i);
-
-                    const idx2 = i + half;
-                    const item2 = idx2 < checklistItems.length ? checklistItems[idx2] : '';
-                    const s2 = getStatus(idx2);
+                    const left = getItemData(i);
+                    const right = getItemData(i + half);
 
                     rows.push(new TableRow({
                         children: [
-                            makeCell(item1, 16),
-                            makeCell(s1.g, 4, false, AlignmentType.CENTER),
-                            makeCell(s1.f, 4, false, AlignmentType.CENTER),
-                            makeCell(s1.r, 4, false, AlignmentType.CENTER),
-                            makeCell(s1.c, 22),
-
-                            makeCell(item2, 16),
-                            makeCell(s2.g, 4, false, AlignmentType.CENTER),
-                            makeCell(s2.f, 4, false, AlignmentType.CENTER),
-                            makeCell(s2.r, 4, false, AlignmentType.CENTER),
-                            makeCell(s2.c, 22)
+                            cell(left.item, 1600), cell(left.g, 400, false, AlignmentType.CENTER), cell(left.f, 400, false, AlignmentType.CENTER), cell(left.r, 400, false, AlignmentType.CENTER), cell(left.c, 2000),
+                            cell(right.item, 1600), cell(right.g, 400, false, AlignmentType.CENTER), cell(right.f, 400, false, AlignmentType.CENTER), cell(right.r, 400, false, AlignmentType.CENTER), cell(right.c, 2000)
                         ]
                     }));
                 }
 
-                // Add Appliance Details & Notes
-                rows.push(
-                    new TableRow({
+                // Footer Rows
+                const addFullRow = (label, value) => {
+                    rows.push(new TableRow({
                         children: [
-                            makeCell("Oven Serial / Model / Make:", 25, true, AlignmentType.LEFT, 2),
-                            makeCell(`${val('oven_serial')} / ${val('oven_model')} / ${val('oven_make')}`, 75, false, AlignmentType.LEFT, 8)
+                            cell(label, 2400, true, AlignmentType.LEFT, 2),
+                            cell(value, 7200, false, AlignmentType.LEFT, 8)
                         ]
-                    }),
-                    new TableRow({
-                        children: [
-                            makeCell("Fridge Serial / Model / Make:", 25, true, AlignmentType.LEFT, 2),
-                            makeCell(`${val('fridge_serial')} / ${val('fridge_model')} / ${val('fridge_make')}`, 75, false, AlignmentType.LEFT, 8)
-                        ]
-                    }),
-                    new TableRow({
-                        children: [
-                            makeCell("Notify Officer ASAP?", 25, true, AlignmentType.LEFT, 2),
-                            makeCell(val('notify_officer'), 75, false, AlignmentType.LEFT, 8)
-                        ]
-                    }),
-                    new TableRow({
-                        children: [
-                            makeCell("Miscellaneous / Comments:", 25, true, AlignmentType.LEFT, 2),
-                            makeCell(val('miscellaneous'), 75, false, AlignmentType.LEFT, 8)
-                        ]
-                    })
-                );
+                    }));
+                };
+
+                addFullRow("Oven Serial / Model / Make:", `${val('oven_serial')} / ${val('oven_model')} / ${val('oven_make')}`);
+                addFullRow("Fridge Serial / Model / Make:", `${val('fridge_serial')} / ${val('fridge_model')} / ${val('fridge_make')}`);
+                addFullRow("Notify Officer ASAP?", val('notify_officer'));
+                addFullRow("Miscellaneous / Comments:", val('miscellaneous'));
 
                 const table = new Table({
                     rows: rows,
-                    width: { size: 100, type: WidthType.PERCENTAGE }
+                    width: { size: 9600, type: WidthType.DXA }
                 });
 
                 const doc = new Document({
