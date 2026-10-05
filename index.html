@@ -246,7 +246,7 @@
             });
         }
 
-        // Direct XML Manipulation based on original Word structure
+        // Direct XML Manipulation based on original Word structure (Cross-browser compatible)
         async function fillOriginalTemplate() {
             const btnText = document.getElementById('btnText');
             btnText.innerText = "Filling Word File...";
@@ -265,50 +265,58 @@
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "application/xml");
 
+                // Helper: Safe node selector for XML with w: namespace (Works on iOS Safari)
+                const getNodes = (parent, name) => {
+                    return Array.from(parent.getElementsByTagName('*')).filter(el => 
+                        el.nodeName === `w:${name}` || el.localName === name
+                    );
+                };
+
                 // Helper: Replace or append text into XML cell
                 const fillCell = (cell, text) => {
                     if (!cell) return;
-                    let p = cell.querySelector("p");
+                    let pList = getNodes(cell, 'p');
+                    let p = pList[0];
                     if (!p) {
-                        p = xmlDoc.createElement("w:p");
+                        p = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:p");
                         cell.appendChild(p);
                     }
                     p.innerHTML = ''; // Clear original empty text
-                    const r = xmlDoc.createElement("w:r");
-                    const t = xmlDoc.createElement("w:t");
+                    const r = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:r");
+                    const t = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:t");
                     t.textContent = String(text || '');
                     r.appendChild(t);
                     p.appendChild(r);
                 };
 
-                const tables = xmlDoc.querySelectorAll("w:tbl");
+                const tables = getNodes(xmlDoc, 'tbl');
                 if (tables.length > 0) {
                     const mainTable = tables[0];
-                    const rows = mainTable.querySelectorAll("w:tr");
+                    const rows = getNodes(mainTable, 'tr');
 
                     // 1. Fill Header / Basic Info Rows
                     if (rows.length > 1) {
-                        const cells = rows[1].querySelectorAll("w:tc");
+                        const cells = getNodes(rows[1], 'tc');
                         if (cells.length >= 4) fillCell(cells[1], `${val('inspector_first')} ${val('inspector_last')}`);
                         if (cells.length >= 4) fillCell(cells[3], val('inspection_date'));
                     }
                     if (rows.length > 2) {
-                        const cells = rows[2].querySelectorAll("w:tc");
+                        const cells = getNodes(rows[2], 'tc');
                         if (cells.length >= 4) fillCell(cells[1], `${val('tenant_first')} ${val('tenant_last')}`);
                         if (cells.length >= 4) fillCell(cells[3], val('project_no'));
                     }
                     if (rows.length > 3) {
-                        const cells = rows[3].querySelectorAll("w:tc");
+                        const cells = getNodes(rows[3], 'tc');
                         if (cells.length >= 4) fillCell(cells[1], val('tenant_phone_day'));
                         if (cells.length >= 4) fillCell(cells[3], val('apt_site'));
                     }
                     if (rows.length > 4) {
-                        const cells = rows[4].querySelectorAll("w:tc");
+                        const cells = getNodes(rows[4], 'tc');
                         if (cells.length >= 4) fillCell(cells[1], val('street_name'));
                         if (cells.length >= 4) fillCell(cells[3], val('municipality'));
                     }
                     if (rows.length > 5) {
-                        const cells = rows[5].querySelectorAll("w:tc");
+                        const cells = getNodes(rows[5], 'tc');
                         if (cells.length >= 4) fillCell(cells[1], val('house_type'));
                         if (cells.length >= 4) fillCell(cells[3], val('basement_exist'));
                     }
@@ -321,7 +329,7 @@
                         const rowIndex = startRow + i;
                         if (rowIndex >= rows.length) break;
 
-                        const rowCells = rows[rowIndex].querySelectorAll("w:tc");
+                        const rowCells = getNodes(rows[rowIndex], 'tc');
 
                         // Left Side Item
                         const st1 = document.querySelector(`input[name="item_${i}_status"]:checked`)?.value || 'Good';
@@ -348,16 +356,16 @@
                     // 3. Fill Bottom Appliance & Notes Rows
                     const totalRows = rows.length;
                     if (totalRows >= 4) {
-                        const ovenCell = rows[totalRows - 4].querySelectorAll("w:tc");
+                        const ovenCell = getNodes(rows[totalRows - 4], 'tc');
                         if (ovenCell.length >= 2) fillCell(ovenCell[1], `${val('oven_serial')} / ${val('oven_model')} / ${val('oven_make')}`);
 
-                        const fridgeCell = rows[totalRows - 3].querySelectorAll("w:tc");
+                        const fridgeCell = getNodes(rows[totalRows - 3], 'tc');
                         if (fridgeCell.length >= 2) fillCell(fridgeCell[1], `${val('fridge_serial')} / ${val('fridge_model')} / ${val('fridge_make')}`);
 
-                        const officerCell = rows[totalRows - 2].querySelectorAll("w:tc");
+                        const officerCell = getNodes(rows[totalRows - 2], 'tc');
                         if (officerCell.length >= 2) fillCell(officerCell[1], val('notify_officer'));
 
-                        const miscCell = rows[totalRows - 1].querySelectorAll("w:tc");
+                        const miscCell = getNodes(rows[totalRows - 1], 'tc');
                         if (miscCell.length >= 2) fillCell(miscCell[1], val('miscellaneous'));
                     }
                 }
