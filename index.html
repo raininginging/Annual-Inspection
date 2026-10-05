@@ -342,7 +342,7 @@
         const buttons = modes.map(m => `<label><input type="radio" name="${id}" value="${m}"> ${m === "Replace" ? "Repair" : m}</label>`).join("");
         return `<div class="row" style="display:block">
           <div class="item-name">${esc(labelOf(name))}</div>
-          <div class="choices">${buttons}<label><input type="radio" name="${id}" value=""> Clear</label></div>
+          <div class="choices">${buttons}<label><input type="radio" name="${id}" value="NA"> NA</label></div>
           <input data-comment="${esc(name)}" placeholder="Comments" style="margin-top:8px">
         </div>`;
       }).join("");
@@ -357,7 +357,7 @@
           <div class="choices">
             <label><input type="radio" name="smoke${i}" value="Good"> Good</label>
             <label><input type="radio" name="smoke${i}" value="Replace"> Repair</label>
-            <label><input type="radio" name="smoke${i}" value=""> Clear</label>
+            <label><input type="radio" name="smoke${i}" value="NA"> NA</label>
           </div>
           <label class="l">Location</label><input id="smoke${i}location">
           <div class="g2">
@@ -602,8 +602,9 @@
         setCellText(cells[good], item.status === "Good" ? "X" : "");
         if (fair >= 0) setCellText(cells[fair], item.status === "Fair" ? "X" : "");
         setCellText(cells[replace], item.status === "Replace" ? "X" : "");
-        if (!cellText(cells[comment]).includes(":")) setCellText(cells[comment], item.comment || "");
-        else if (item.comment) setCellText(cells[comment], cellText(cells[comment]).split(":")[0] + ": " + item.comment);
+        const note = item.status === "NA" ? (item.comment ? "NA. " + item.comment : "NA") : (item.comment || "");
+        if (!cellText(cells[comment]).includes(":")) setCellText(cells[comment], note);
+        else if (note) setCellText(cells[comment], cellText(cells[comment]).split(":")[0] + ": " + note);
       });
     }
     function setPair(table, label, left, right) {
@@ -654,22 +655,24 @@
         const b = cells[1] ? cellText(cells[1]) : "";
         if (HEATING.includes(b) && r.items[b]) {
           const item = r.items[b];
+          const note = item.status === "NA" ? (item.comment ? "NA. " + item.comment : "NA") : (item.comment || "");
           setCellText(cells[2], item.status === "Good" ? "X" : "");
           setCellText(cells[3], item.status === "Replace" ? "X" : "");
-          setCellText(cells[4], item.comment || "");
+          setCellText(cells[4], note);
         }
         let key = a;
         if (a === "GFCI Outlets") key = gfci++ === 0 ? "GFCI Outlets" : "GFCI Outlets 2";
         if (ELECTRICAL.includes(key) && r.items[key] && cells.length >= 4) {
+          const note = r.items[key].status === "NA" ? (r.items[key].comment ? "NA. " + r.items[key].comment : "NA") : (r.items[key].comment || "");
           setCellText(cells[1], r.items[key].status === "Good" ? "X" : "");
           setCellText(cells[2], r.items[key].status === "Replace" ? "X" : "");
-          setCellText(cells[3], r.items[key].comment || "");
+          setCellText(cells[3], note);
         }
         if (a === "Smoke Detector") {
           const s = r.smokes[smoke++] || smoke();
           setCellText(cells[1], s.status === "Good" ? "X" : "");
           setCellText(cells[2], s.status === "Replace" ? "X" : "");
-          setCellText(cells[3], "Location: " + [s.location, s.comment].filter(Boolean).join(" — "));
+          setCellText(cells[3], "Location: " + [s.status === "NA" ? "NA" : "", s.location, s.comment].filter(Boolean).join(" — "));
           const rest = ["Type: " + (s.type || ""), "Expired Date: " + (s.expired || ""), "Battery Charged: " + yn(s.battery), "Tested Unit: " + yn(s.tested)];
           for (let n = 0; n < 4; n++) {
             const sib = rows[ri + 1 + n];
