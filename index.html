@@ -1,310 +1,691 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HNB Annual Inspection Form</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- JSZip & FileSaver -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <style>
-        input, select, textarea { font-size: 16px !important; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HNB Annual Inspection</title>
+  <style>
+    :root {
+      --blue: #0b5cab;
+      --bg: #f2f2f7;
+      --card: #fff;
+      --line: #e5e5ea;
+      --muted: #6b7280;
+      --bad: #b45309;
+      --good: #047857;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: #111; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    button, input, select, textarea { font-family: inherit; font-size: 16px; }
+    .nav { position: sticky; top: 0; z-index: 20; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; }
+    .nav h1 { font-size: 16px; margin: 0; font-weight: 700; }
+    .nav button { background: transparent; color: #fff; border: 0; font-weight: 650; font-size: 15px; padding: 6px; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 14px 14px 96px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .card h2 { margin: 0 0 10px; font-size: 15px; color: var(--blue); }
+    label.l { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin: 8px 0 4px; text-transform: uppercase; }
+    input[type="text"], input[type="email"], input[type="date"], input[type="number"], select, textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fff;
+    }
+    textarea { min-height: 64px; resize: vertical; }
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+    .row:last-child { border-bottom: 0; }
+    .item-name { font-weight: 650; font-size: 14px; }
+    .choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .choices label { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 13px; background: #fff; }
+    .choices input { margin-right: 4px; }
+    .bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); display: flex; gap: 8px; padding: 10px 14px; }
+    .bar .inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; width: 100%; }
+    .btn { border: 0; border-radius: 10px; padding: 12px 10px; font-weight: 700; }
+    .btn-primary { background: var(--blue); color: #fff; flex: 1; }
+    .btn-ghost { background: #e8eef7; color: var(--blue); }
+    .list-item { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .list-item strong { display: block; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .pill { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 8px; }
+    .pill-bad { background: #ffedd5; color: var(--bad); }
+    .pill-ok { background: #d1fae5; color: var(--good); }
+    .hidden { display: none; }
+    .hint { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans pb-24">
-
-    <!-- Header -->
-    <header class="bg-blue-700 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-lg font-bold">HNB Inspection Form</h1>
-            <div>
-                <label for="templateUpload" class="text-xs bg-blue-800 border border-blue-400 text-white px-2.5 py-1.5 rounded cursor-pointer font-medium hover:bg-blue-600">
-                    📂 Upload Word (.docx)
-                </label>
-                <input type="file" id="templateUpload" accept=".docx" class="hidden" onchange="handleTemplateUpload(event)">
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Form -->
-    <main class="max-w-3xl mx-auto p-4 space-y-6">
-        <form id="inspectionForm" class="space-y-6">
-            
-            <!-- 1. Inspector -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">1. Inspector Information</h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Last Name</label>
-                        <input type="text" id="inspector_last" value="ZHANG" class="w-full border rounded p-2 bg-slate-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">First Name</label>
-                        <input type="text" id="inspector_first" value="Rui" class="w-full border rounded p-2 bg-slate-50">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Date of Inspection</label>
-                    <input type="date" id="inspection_date" class="w-full border rounded p-2">
-                </div>
-            </div>
-
-            <!-- 2. Tenant -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">2. Tenant Information</h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="tenant_last" placeholder="Tenant Last Name" class="border rounded p-2">
-                    <input type="text" id="tenant_first" placeholder="First & Middle Names" class="border rounded p-2">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="tenant_phone_day" placeholder="Daytime Phone #" class="border rounded p-2">
-                    <input type="text" id="tenant_phone_other" placeholder="Other Phone #" class="border rounded p-2">
-                </div>
-                <input type="email" id="tenant_email" placeholder="Email" class="w-full border rounded p-2">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="num_adults" placeholder="# of Adults" class="border rounded p-2">
-                    <input type="number" id="num_kids" placeholder="# of Kids" class="border rounded p-2">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="num_pets" placeholder="# of Pets" class="border rounded p-2">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Update Septic Services?</label>
-                        <select id="update_septic" class="w-full border rounded p-2 bg-white">
-                            <option value="NO">NO</option>
-                            <option value="YES">YES</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. Details -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">3. Unit & Building Details</h2>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="project_no" placeholder="Project No." class="border rounded p-2">
-                    <input type="text" id="apt_site" placeholder="Apt. / Site #" class="border rounded p-2">
-                </div>
-                <input type="text" id="street_name" placeholder="Street # and Name" class="w-full border rounded p-2">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="municipality" placeholder="Municipality" class="border rounded p-2">
-                    <input type="text" id="nb_power_meter" placeholder="NB Power Meter #" class="border rounded p-2">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Type of House</label>
-                        <select id="house_type" class="w-full border rounded p-2 bg-white">
-                            <option value="Mini-home">Mini-home</option>
-                            <option value="Bungalow">Bungalow</option>
-                            <option value="Single Unit">Single Unit</option>
-                            <option value="Duplex">Duplex</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Basement Exist?</label>
-                        <select id="basement_exist" class="w-full border rounded p-2 bg-white">
-                            <option value="NO">NO</option>
-                            <option value="YES">YES</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. Checklist -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h2 class="text-md font-bold text-blue-700">4. Inspection Checklist</h2>
-                    <button type="button" onclick="setAllGood()" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded font-bold border border-emerald-300">Set All Good</button>
-                </div>
-                <div id="dynamic-checklist" class="space-y-3 pt-2"></div>
-            </div>
-
-            <!-- 5. Appliances -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">5. Appliances Details</h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-2 border p-2.5 rounded bg-slate-50">
-                        <span class="text-xs font-bold text-slate-700 block border-b pb-1">Oven</span>
-                        <input type="text" id="oven_serial" placeholder="Serial #" class="w-full border rounded p-1.5 text-xs">
-                        <input type="text" id="oven_model" placeholder="Model #" class="w-full border rounded p-1.5 text-xs">
-                        <input type="text" id="oven_make" placeholder="Make #" class="w-full border rounded p-1.5 text-xs">
-                    </div>
-                    <div class="space-y-2 border p-2.5 rounded bg-slate-50">
-                        <span class="text-xs font-bold text-slate-700 block border-b pb-1">Fridge</span>
-                        <input type="text" id="fridge_serial" placeholder="Serial #" class="w-full border rounded p-1.5 text-xs">
-                        <input type="text" id="fridge_model" placeholder="Model #" class="w-full border rounded p-1.5 text-xs">
-                        <input type="text" id="fridge_make" placeholder="Make #" class="w-full border rounded p-1.5 text-xs">
-                    </div>
-                </div>
-            </div>
-
-            <!-- 6. Sign Off -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border space-y-3">
-                <h2 class="text-md font-bold text-blue-700 border-b pb-2">6. Final Notes & Sign Off</h2>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Notify Program Officer ASAP?</label>
-                    <select id="notify_officer" class="w-full border rounded p-2 bg-white">
-                        <option value="NO">NO</option>
-                        <option value="YES">YES</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Miscellaneous / Comments</label>
-                    <textarea id="miscellaneous" rows="3" placeholder="Additional notes..." class="w-full border rounded p-2"></textarea>
-                </div>
-            </div>
-        </form>
-    </main>
-
-    <!-- Floating Share Button -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-lg flex gap-3 max-w-3xl mx-auto">
-        <button type="button" id="shareBtn" onclick="fillOriginalTemplate()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-            <span id="btnText">Fill & Export Original Word</span>
-        </button>
+<body>
+  <div id="listView">
+    <div class="nav">
+      <h1>Annual Inspection</h1>
+      <button type="button" id="newBtn">＋ 新建</button>
     </div>
+    <div class="wrap">
+      <p class="hint">记录保存在这台手机/浏览器里。导出会填入仓库里的 template.docx。更换设备前请先导出 JSON。</p>
+      <div class="card" id="recordList"></div>
+      <button class="btn btn-ghost" id="importBtn" type="button">导入 JSON</button>
+      <input id="importFile" type="file" accept="application/json" class="hidden">
+    </div>
+  </div>
 
-    <script>
-        document.getElementById('inspection_date').valueAsDate = new Date();
+  <div id="formView" class="hidden">
+    <div class="nav">
+      <button type="button" id="backBtn">‹ 列表</button>
+      <h1>年度巡检</h1>
+      <button type="button" id="saveBtn">保存</button>
+    </div>
+    <form class="wrap" id="form">
+      <div class="card">
+        <h2>巡检员 / Inspector</h2>
+        <div class="g2">
+          <div><label class="l">Last Name</label><input id="inspectorLast" value="ZHANG"></div>
+          <div><label class="l">First Name</label><input id="inspectorFirst" value="Rui"></div>
+        </div>
+        <label class="l">Date of Inspection</label>
+        <input id="inspectionDate" type="date">
+      </div>
 
-        let loadedTemplateArrayBuffer = null;
+      <div class="card">
+        <h2>住户 / Tenant</h2>
+        <div class="g2">
+          <div><label class="l">Last Name</label><input id="tenantLast"></div>
+          <div><label class="l">First & Middle Names</label><input id="tenantFirst"></div>
+        </div>
+        <div class="g2">
+          <div><label class="l">Daytime Phone</label><input id="phoneDay"></div>
+          <div><label class="l">Other Phone</label><input id="phoneOther"></div>
+        </div>
+        <label class="l">Email</label><input id="email" type="email">
+        <div class="g3">
+          <div><label class="l">Adults</label><input id="adults" type="number" min="0"></div>
+          <div><label class="l">Kids</label><input id="kids" type="number" min="0"></div>
+          <div><label class="l">Pets</label><input id="pets" type="number" min="0"></div>
+        </div>
+        <label class="l">Pet comments</label><input id="petComments">
+        <label class="l">Update septic services</label>
+        <select id="septicUpdate"><option value=""></option><option>YES</option><option>NO</option></select>
+      </div>
 
-        // Auto load template.docx from repo root
-        window.addEventListener('DOMContentLoaded', () => {
-            fetch('template.docx')
-                .then(res => {
-                    if (res.ok) return res.arrayBuffer();
-                    throw new Error("Default template.docx not found.");
-                })
-                .then(buffer => {
-                    loadedTemplateArrayBuffer = buffer;
-                    console.log("Default Word template loaded successfully.");
-                })
-                .catch(err => {
-                    console.warn("Auto template load warning:", err.message);
-                });
+      <div class="card">
+        <h2>地址 / Unit</h2>
+        <div class="g2">
+          <div><label class="l">Project No</label><input id="projectNo"></div>
+          <div><label class="l">Apt. / Site #</label><input id="apt"></div>
+        </div>
+        <label class="l">Street # and Name</label><input id="street">
+        <label class="l">Municipality</label><input id="municipality" value="Fredericton">
+        <label class="l">Type of House</label>
+        <select id="houseType">
+          <option value=""></option>
+          <option>Mini-home</option><option>Bungalow</option><option>Single Unit</option><option>Duplex</option><option>Other</option>
+        </select>
+        <label class="l">Other type</label><input id="houseOther">
+        <div class="g2">
+          <div>
+            <label class="l">Basement</label>
+            <select id="basement"><option value=""></option><option>YES</option><option>NO</option></select>
+          </div>
+          <div>
+            <label class="l">If yes, type</label>
+            <select id="basementType"><option value=""></option><option>Crawl Space</option><option>Full Basement</option></select>
+          </div>
+        </div>
+        <label class="l">NB Power Meter #</label><input id="meter">
+      </div>
+
+      <div class="card">
+        <h2>Building Exterior</h2>
+        <p class="hint">Replace / Repair 请在备注里写位置。现场照片保存在手机相册，备注里注明即可。</p>
+        <div id="exterior"></div>
+        <label class="l">Septic rise exists?</label>
+        <select id="septicRise"><option value=""></option><option>YES</option><option>NO</option></select>
+        <label class="l">Septic comments</label><input id="septicComment">
+        <label class="l">Dead bolts installed</label>
+        <select id="deadbolts"><option value=""></option><option>YES</option><option>NO</option></select>
+        <label class="l">If no, location</label><input id="deadboltLocation">
+      </div>
+
+      <div class="card">
+        <h2>Building Interior</h2>
+        <div id="interior"></div>
+      </div>
+
+      <div class="card">
+        <h2>Insulation</h2>
+        <div class="g2">
+          <div>
+            <label class="l">Basement depth</label>
+            <select id="insulDepth"><option value=""></option><option>8 ft</option><option>4 ft down</option></select>
+          </div>
+          <div><label class="l">Basement type</label><input id="insulType" placeholder="e.g. fiberglass batts"></div>
+        </div>
+        <label class="l">Attic</label>
+        <select id="attic"><option value=""></option><option>Fiberglass</option><option>Loose</option></select>
+        <label class="l">Attic conditions</label><input id="atticConditions">
+      </div>
+
+      <div class="card">
+        <h2>Plumbing</h2>
+        <div id="plumbing"></div>
+        <label class="l">Shower walls type</label>
+        <select id="showerType"><option value=""></option><option>Ceramic</option><option>Enclosure</option></select>
+        <div class="g2">
+          <div><label class="l">HWT capacity</label><input id="hwtCapacity"></div>
+          <div><label class="l">HWT date</label><input id="hwtDate"></div>
+        </div>
+        <div class="g2">
+          <div>
+            <label class="l">HWT</label>
+            <select id="hwtOwn"><option value=""></option><option>Leased</option><option>Owned</option></select>
+          </div>
+          <div><label class="l">HWT make</label><input id="hwtMake"></div>
+        </div>
+        <label class="l">Water leaks</label>
+        <select id="leaks"><option value=""></option><option>YES</option><option>NO</option></select>
+        <label class="l">If yes, location</label><input id="leakLocation">
+        <label class="l">Water test collected</label>
+        <select id="waterTest"><option value=""></option><option>YES</option><option>NO</option></select>
+      </div>
+
+      <div class="card">
+        <h2>Electrical / Heating</h2>
+        <div id="heating"></div>
+        <div id="electrical"></div>
+        <h2 style="margin-top:14px">Smoke detectors</h2>
+        <div id="smokes"></div>
+      </div>
+
+      <div class="card">
+        <h2>Ventilation</h2>
+        <div id="vents"></div>
+        <label class="l">Visible mold</label>
+        <select id="mold"><option value=""></option><option>YES</option><option>NO</option></select>
+        <label class="l">If yes, location</label><input id="moldLocation">
+      </div>
+
+      <div class="card">
+        <h2>Appliances</h2>
+        <div class="g2">
+          <div>
+            <label class="l">Oven serial</label><input id="ovenSerial">
+            <label class="l">Oven model</label><input id="ovenModel">
+            <label class="l">Oven make</label><input id="ovenMake">
+            <label class="l">Oven comment</label><input id="ovenComment">
+          </div>
+          <div>
+            <label class="l">Fridge serial</label><input id="fridgeSerial">
+            <label class="l">Fridge model</label><input id="fridgeModel">
+            <label class="l">Fridge make</label><input id="fridgeMake">
+            <label class="l">Fridge comment</label><input id="fridgeComment">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Sign-off</h2>
+        <label class="l">Notify program officer ASAP</label>
+        <select id="notify"><option value=""></option><option>YES</option><option>NO</option></select>
+        <label class="l">Miscellaneous</label>
+        <textarea id="miscellaneous"></textarea>
+        <button class="btn btn-ghost" type="button" id="allGoodBtn" style="margin-top:8px">未填项全部标 Good</button>
+      </div>
+    </form>
+    <div class="bar">
+      <div class="inner">
+        <button class="btn btn-ghost" type="button" id="jsonBtn">JSON</button>
+        <button class="btn btn-primary" type="button" id="exportBtn">导出 Word</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script>
+    const KEY = "hnb-annual-inspection-v1";
+    const EXTERIOR = ["Roof","Siding","Eaves through","Windows","Foundation","Surface Grading & Drainage","Portable Well","Well Cap","Doors","Decks/landings/ramps"];
+    const INTERIOR = ["Stairs","Handrail Downstairs","Handrail Upstairs","House Keeping","Flooring","Cabinets"];
+    const PLUMBING = ["Water Pump","Water Treatment","Shower Walls","Hot Water Tank"];
+    const HEATING = ["Electric baseboard","Heat pump","Other"];
+    const ELECTRICAL = ["Elect Panel","GFCI Outlets","GFCI Outlets 2","Lighting","Security System / Intercom","Fire Alarm System"];
+    const VENTS = ["HRV","Outside Vents","Filters","Exhaust Fan","Randon Dam","Range Hood"];
+    const RATED = [...EXTERIOR, ...INTERIOR, ...PLUMBING, ...VENTS];
+
+    let records = loadRecords();
+    let currentId = null;
+    let templateBuffer = null;
+
+    function loadRecords() {
+      try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+      catch { return []; }
+    }
+    function persist() { localStorage.setItem(KEY, JSON.stringify(records)); }
+
+    function blank() {
+      const items = {};
+      RATED.forEach(name => items[name] = { status: "", comment: "" });
+      HEATING.forEach(name => items[name] = { status: "", comment: "" });
+      ELECTRICAL.forEach(name => items[name] = { status: "", comment: "" });
+      return {
+        id: crypto.randomUUID(),
+        updated: new Date().toISOString(),
+        inspectorLast: "ZHANG", inspectorFirst: "Rui", inspectionDate: new Date().toISOString().slice(0, 10),
+        tenantLast: "", tenantFirst: "", phoneDay: "", phoneOther: "", email: "",
+        adults: "", kids: "", pets: "", petComments: "", septicUpdate: "",
+        projectNo: "", apt: "", street: "", municipality: "Fredericton", houseType: "", houseOther: "",
+        basement: "", basementType: "", meter: "",
+        items,
+        septicRise: "", septicComment: "", deadbolts: "", deadboltLocation: "",
+        insulDepth: "", insulType: "", attic: "", atticConditions: "",
+        showerType: "", hwtCapacity: "", hwtDate: "", hwtOwn: "", hwtMake: "",
+        leaks: "", leakLocation: "", waterTest: "",
+        smokes: [smoke(), smoke(), smoke()],
+        mold: "", moldLocation: "",
+        ovenSerial: "", ovenModel: "", ovenMake: "", ovenComment: "",
+        fridgeSerial: "", fridgeModel: "", fridgeMake: "", fridgeComment: "",
+        notify: "", miscellaneous: ""
+      };
+    }
+    function smoke() { return { status: "", comment: "", location: "", type: "", expired: "", battery: "", tested: "" }; }
+
+    function renderList() {
+      const box = document.getElementById("recordList");
+      if (!records.length) {
+        box.innerHTML = "<p class='muted'>还没有记录。点右上角新建。</p>";
+        return;
+      }
+      box.innerHTML = records
+        .slice()
+        .sort((a, b) => (b.updated || "").localeCompare(a.updated || ""))
+        .map(r => {
+          const title = [r.apt, r.street].filter(Boolean).join(" ") || "未填地址";
+          const flags = repairCount(r);
+          return `<div class="list-item">
+            <div>
+              <strong>${esc(title)}</strong>
+              <span class="muted">${esc(r.inspectionDate || "")} · ${esc((r.inspectorFirst || "") + " " + (r.inspectorLast || ""))}</span>
+            </div>
+            <div>
+              <span class="pill ${flags ? "pill-bad" : "pill-ok"}">${flags ? flags + " repair" : "no repair"}</span>
+              <button type="button" data-open="${r.id}">打开</button>
+              <button type="button" data-del="${r.id}">删</button>
+            </div>
+          </div>`;
+        }).join("");
+    }
+    function repairCount(r) {
+      return Object.values(r.items || {}).filter(i => i.status === "Replace").length
+        + (r.smokes || []).filter(s => s.status === "Replace").length
+        + (r.mold === "YES" ? 1 : 0) + (r.leaks === "YES" ? 1 : 0);
+    }
+    function esc(s) { return String(s || "").replace(/[&<>"]/g, c => ({ "&": "&", "<": "<", ">": ">", '"': """ }[c])); }
+
+    function mountChecks(containerId, names, modes) {
+      const box = document.getElementById(containerId);
+      box.innerHTML = names.map(name => {
+        const id = cssId(name);
+        const buttons = modes.map(m => `<label><input type="radio" name="${id}" value="${m}"> ${m === "Replace" ? "Repair" : m}</label>`).join("");
+        return `<div class="row" style="display:block">
+          <div class="item-name">${esc(labelOf(name))}</div>
+          <div class="choices">${buttons}<label><input type="radio" name="${id}" value=""> 清空</label></div>
+          <input data-comment="${esc(name)}" placeholder="Comments" style="margin-top:8px">
+        </div>`;
+      }).join("");
+    }
+    function labelOf(name) { return name === "GFCI Outlets 2" ? "GFCI Outlets (2)" : name === "Randon Dam" ? "Radon Damper (form: Randon Dam)" : name; }
+    function cssId(name) { return "st_" + name.replace(/[^a-z0-9]+/gi, "_"); }
+
+    function mountSmokes() {
+      document.getElementById("smokes").innerHTML = [0, 1, 2].map(i => `
+        <div class="card" style="margin:8px 0;padding:10px">
+          <strong>Smoke detector ${i + 1}</strong>
+          <div class="choices">
+            <label><input type="radio" name="smoke${i}" value="Good"> Good</label>
+            <label><input type="radio" name="smoke${i}" value="Replace"> Repair</label>
+            <label><input type="radio" name="smoke${i}" value=""> 清空</label>
+          </div>
+          <label class="l">Location</label><input id="smoke${i}location">
+          <div class="g2">
+            <div><label class="l">Type</label><input id="smoke${i}type"></div>
+            <div><label class="l">Expired date</label><input id="smoke${i}expired"></div>
+          </div>
+          <div class="g2">
+            <div><label class="l">Battery charged</label><select id="smoke${i}battery"><option value=""></option><option>YES</option><option>NO</option></select></div>
+            <div><label class="l">Tested unit</label><select id="smoke${i}tested"><option value=""></option><option>YES</option><option>NO</option></select></div>
+          </div>
+          <label class="l">Comments</label><input id="smoke${i}comment">
+        </div>`).join("");
+    }
+
+    function showList() {
+      document.getElementById("listView").classList.remove("hidden");
+      document.getElementById("formView").classList.add("hidden");
+      renderList();
+    }
+    function showForm(rec) {
+      currentId = rec.id;
+      fillForm(rec);
+      document.getElementById("listView").classList.add("hidden");
+      document.getElementById("formView").classList.remove("hidden");
+    }
+
+    function fillForm(r) {
+      const ids = ["inspectorLast","inspectorFirst","inspectionDate","tenantLast","tenantFirst","phoneDay","phoneOther","email","adults","kids","pets","petComments","septicUpdate","projectNo","apt","street","municipality","houseType","houseOther","basement","basementType","meter","septicRise","septicComment","deadbolts","deadboltLocation","insulDepth","insulType","attic","atticConditions","showerType","hwtCapacity","hwtDate","hwtOwn","hwtMake","leaks","leakLocation","waterTest","mold","moldLocation","ovenSerial","ovenModel","ovenMake","ovenComment","fridgeSerial","fridgeModel","fridgeMake","fridgeComment","notify","miscellaneous"];
+      ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = r[id] || ""; });
+      Object.entries(r.items || {}).forEach(([name, item]) => {
+        const radio = document.querySelector(`input[name="${cssId(name)}"][value="${item.status || ""}"]`);
+        if (radio) radio.checked = true;
+        const comment = document.querySelector(`[data-comment="${CSS.escape(name)}"]`);
+        if (comment) comment.value = item.comment || "";
+      });
+      (r.smokes || [smoke(), smoke(), smoke()]).forEach((s, i) => {
+        const radio = document.querySelector(`input[name="smoke${i}"][value="${s.status || ""}"]`);
+        if (radio) radio.checked = true;
+        ["location","type","expired","battery","tested","comment"].forEach(k => {
+          const el = document.getElementById(`smoke${i}${k}`);
+          if (el) el.value = s[k] || "";
         });
+      });
+    }
 
-        // Manual upload
-        function handleTemplateUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    loadedTemplateArrayBuffer = e.target.result;
-                    alert("Original Word Template loaded successfully!");
-                };
-                reader.readAsArrayBuffer(file);
-            }
-        }
-
-        const checklistItems = [
-            "Roof", "Siding", "Eaves through", "Windows", "Foundation", 
-            "Surface Grading & Drainage", "Portable Well", "Well Cap", "Doors", "Decks/landings/ramps",
-            "Stairs", "Handrail Downstairs", "Handrail Upstairs", "House Keeping", "Flooring", "Cabinets",
-            "Water Pump", "Water Treatment", "Shower Walls", "Hot Water Tank",
-            "Heating System", "Elect Panel", "GFCI Outlets", "Lighting", "Fire Alarm System", "Smoke Detector",
-            "HRV", "Outside Vents", "Filters", "Exhaust Fan", "Range Hood"
-        ];
-
-        const checklistContainer = document.getElementById('dynamic-checklist');
-        checklistItems.forEach((item, index) => {
-            const key = `item_${index}`;
-            const html = `
-                <div class="p-3 bg-slate-50 rounded border space-y-2">
-                    <span class="font-bold text-sm text-slate-700">${index + 1}. ${item}</span>
-                    <div class="grid grid-cols-4 gap-1.5">
-                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Good" onchange="handleStatusChange(${index}, 'Good')" checked> Good</label>
-                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Fair" onchange="handleStatusChange(${index}, 'Fair')"> Fair</label>
-                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Replace/Repair" onchange="handleStatusChange(${index}, 'Replace/Repair')"> Repair</label>
-                        <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer text-amber-700 font-medium"><input type="radio" name="${key}_status" value="Not Inspected" onchange="handleStatusChange(${index}, 'Not Inspected')"> Not Inspected</label>
-                    </div>
-                    <input type="text" id="${key}_comment" placeholder="Comments" class="w-full border rounded p-1.5 text-xs bg-white">
-                </div>
-            `;
-            checklistContainer.insertAdjacentHTML('beforeend', html);
+    function readForm() {
+      const existing = records.find(r => r.id === currentId) || blank();
+      const r = { ...existing, id: currentId, updated: new Date().toISOString(), items: { ...(existing.items || {}) }, smokes: [] };
+      ["inspectorLast","inspectorFirst","inspectionDate","tenantLast","tenantFirst","phoneDay","phoneOther","email","adults","kids","pets","petComments","septicUpdate","projectNo","apt","street","municipality","houseType","houseOther","basement","basementType","meter","septicRise","septicComment","deadbolts","deadboltLocation","insulDepth","insulType","attic","atticConditions","showerType","hwtCapacity","hwtDate","hwtOwn","hwtMake","leaks","leakLocation","waterTest","mold","moldLocation","ovenSerial","ovenModel","ovenMake","ovenComment","fridgeSerial","fridgeModel","fridgeMake","fridgeComment","notify","miscellaneous"].forEach(id => {
+        r[id] = document.getElementById(id).value.trim();
+      });
+      document.querySelectorAll("[data-comment]").forEach(input => {
+        const name = input.getAttribute("data-comment");
+        const status = (document.querySelector(`input[name="${cssId(name)}"]:checked`) || {}).value || "";
+        r.items[name] = { status, comment: input.value.trim() };
+      });
+      for (let i = 0; i < 3; i++) {
+        r.smokes.push({
+          status: (document.querySelector(`input[name="smoke${i}"]:checked`) || {}).value || "",
+          location: val(`smoke${i}location`), type: val(`smoke${i}type`), expired: val(`smoke${i}expired`),
+          battery: val(`smoke${i}battery`), tested: val(`smoke${i}tested`), comment: val(`smoke${i}comment`)
         });
+      }
+      return r;
+    }
+    function val(id) { return (document.getElementById(id).value || "").trim(); }
 
-        function handleStatusChange(index, status) {
-            const commentInput = document.getElementById(`item_${index}_comment`);
-            if (status === 'Not Inspected') {
-                commentInput.value = 'N/A';
-            } else if (commentInput.value.trim().toUpperCase() === 'N/A') {
-                commentInput.value = '';
-            }
+    function saveCurrent() {
+      const r = readForm();
+      const i = records.findIndex(x => x.id === r.id);
+      if (i >= 0) records[i] = r; else records.push(r);
+      persist();
+      return r;
+    }
+
+    document.getElementById("newBtn").onclick = () => showForm(blank());
+    document.getElementById("backBtn").onclick = () => { saveCurrent(); showList(); };
+    document.getElementById("saveBtn").onclick = () => { saveCurrent(); alert("已保存到本机浏览器。"); };
+    document.getElementById("recordList").onclick = (e) => {
+      const open = e.target.getAttribute("data-open");
+      const del = e.target.getAttribute("data-del");
+      if (open) showForm(records.find(r => r.id === open));
+      if (del && confirm("删除这条巡检记录？")) {
+        records = records.filter(r => r.id !== del);
+        persist();
+        renderList();
+      }
+    };
+    document.getElementById("allGoodBtn").onclick = () => {
+      document.querySelectorAll('input[type="radio"][value="Good"]').forEach(radio => {
+        const name = radio.name;
+        const checked = document.querySelector(`input[name="${name}"]:checked`);
+        if (!checked || !checked.value) radio.checked = true;
+      });
+    };
+    document.getElementById("jsonBtn").onclick = () => {
+      const r = saveCurrent();
+      const blob = new Blob([JSON.stringify(r, null, 2)], { type: "application/json" });
+      saveAs(blob, fileBase(r) + ".json");
+    };
+    document.getElementById("importBtn").onclick = () => document.getElementById("importFile").click();
+    document.getElementById("importFile").onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const data = JSON.parse(await file.text());
+      const incoming = Array.isArray(data) ? data : [data];
+      incoming.forEach(r => { if (!r.id) r.id = crypto.randomUUID(); records.push(r); });
+      persist();
+      renderList();
+    };
+    document.getElementById("exportBtn").onclick = exportWord;
+
+    function fileBase(r) {
+      const place = [r.apt, r.street].filter(Boolean).join("_").replace(/[^\w.-]+/g, "_") || "unit";
+      return `Annual_Inspection_${place}_${r.inspectionDate || "undated"}`;
+    }
+
+    async function ensureTemplate() {
+      if (templateBuffer) return templateBuffer;
+      const res = await fetch("template.docx");
+      if (!res.ok) throw new Error("找不到 template.docx。请在仓库页面打开，或把 template.docx 放在同一目录。");
+      templateBuffer = await res.arrayBuffer();
+      return templateBuffer;
+    }
+
+    async function exportWord() {
+      const r = saveCurrent();
+      const btn = document.getElementById("exportBtn");
+      btn.textContent = "正在填表…";
+      try {
+        const zip = await JSZip.loadAsync(await ensureTemplate());
+        const xmlText = await zip.file("word/document.xml").async("string");
+        const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+        if (doc.getElementsByTagName("parsererror").length) throw new Error("Word 模板无法解析。");
+        fillDocument(doc, r);
+        const out = new XMLSerializer().serializeToString(doc);
+        zip.file("word/document.xml", out);
+        const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+        const name = fileBase(r) + ".docx";
+        const file = new File([blob], name, { type: blob.type });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: name, files: [file] });
+        } else {
+          saveAs(blob, name);
         }
+      } catch (err) {
+        alert(err.message || String(err));
+      } finally {
+        btn.textContent = "导出 Word";
+      }
+    }
 
-        function setAllGood() {
-            checklistItems.forEach((_, index) => {
-                const radios = document.getElementsByName(`item_${index}_status`);
-                if(radios.length) {
-                    radios[0].checked = true;
-                    handleStatusChange(index, 'Good');
-                }
-            });
+    const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+    function nodes(el, tag) { return Array.from(el.getElementsByTagNameNS(W, tag)); }
+    function cellText(tc) {
+      if (!tc) return "";
+      return nodes(tc, "t").map(t => t.textContent || "").join("").replace(/\s+/g, " ").trim();
+    }
+    function setCellText(tc, text) {
+      const ts = nodes(tc, "t");
+      if (ts.length) {
+        ts[0].textContent = text;
+        ts[0].setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
+        for (let i = 1; i < ts.length; i++) ts[i].textContent = "";
+        return;
+      }
+      const p = docEl(tc, "p");
+      const run = docEl(tc, "r");
+      const t = docEl(tc, "t");
+      t.setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
+      t.textContent = text;
+      run.appendChild(t);
+      p.appendChild(run);
+      tc.appendChild(p);
+    }
+    function docEl(tc, tag) { return tc.ownerDocument.createElementNS(W, "w:" + tag); }
+    function mark(value, option) { return value === option ? option + " [X]" : option; }
+    function yn(value) {
+      if (!value) return "YES / NO";
+      return `${mark(value, "YES")}    ${mark(value, "NO")}`;
+    }
+
+    function fillDocument(doc, r) {
+      const tables = nodes(doc.documentElement, "tbl");
+      fillHeader(tables[0], r);
+      fillRated(tables[1], r, EXTERIOR);
+      setPair(tables[1], "Septic- Rise exists?", "Septic rise: " + yn(r.septicRise), r.septicComment ? "Comments: " + r.septicComment : "Comments:");
+      setPair(tables[1], "Dead Bolts Installed", "Dead bolts: " + yn(r.deadbolts), r.deadboltLocation ? "If no, location: " + r.deadboltLocation : "If No, Add Location:");
+      fillRated(tables[2], r, INTERIOR);
+      fillInsulation(tables[3], r);
+      fillRated(tables[3], r, PLUMBING);
+      fillPlumbingExtras(tables[3], r);
+      fillElectrical(tables[4], r);
+      fillRated(tables[5], r, VENTS);
+      fillAppliances(tables[5], r);
+      if (tables[6]) setCellText(nodes(tables[6], "tc")[0], "Notify Program Officer ASAP:     " + yn(r.notify));
+      if (tables[7]) setCellText(nodes(tables[7], "tc")[0], "Miscellaneous: " + (r.miscellaneous || ""));
+      nodes(doc.documentElement, "p").forEach(p => {
+        const text = nodes(p, "t").map(t => t.textContent || "").join("");
+        if (text.includes("Signature")) setParagraph(p, "Inspector's Signature: " + `${r.inspectorFirst} ${r.inspectorLast}`.trim());
+        if (text.includes("____") && text.includes("Date:")) setParagraph(p, "Date: " + (r.inspectionDate || ""));
+      });
+    }
+    function setParagraph(p, text) {
+      const ts = nodes(p, "t");
+      if (!ts.length) return;
+      ts[0].textContent = text;
+      for (let i = 1; i < ts.length; i++) ts[i].textContent = "";
+    }
+    function fillHeader(table, r) {
+      const rows = nodes(table, "tr");
+      const cells = i => nodes(rows[i], "tc");
+      setCellText(cells(1)[0], "Last Name: " + r.inspectorLast);
+      setCellText(cells(1)[1], "First Name: " + r.inspectorFirst);
+      setCellText(cells(2)[0], "Date of Inspection: " + r.inspectionDate);
+      setCellText(cells(4)[0], "Last Name: " + r.tenantLast);
+      setCellText(cells(4)[1], "First & Middle Names: " + r.tenantFirst);
+      setCellText(cells(5)[0], "Daytime Phone #: " + r.phoneDay);
+      setCellText(cells(5)[1], "Email: " + r.email);
+      setCellText(cells(6)[0], "Other Phone #: " + r.phoneOther);
+      setCellText(cells(6)[1], "Update Septic Services: " + yn(r.septicUpdate));
+      setCellText(cells(7)[0], `# of Occupants: Adults ${r.adults || "____"} Kids ${r.kids || "____"}`);
+      setCellText(cells(8)[0], `# of Pets: ${r.pets || "____"} Comments: ${r.petComments || ""}`);
+      setCellText(cells(9)[0], "Address of the unit: " + [r.apt, r.street, r.municipality].filter(Boolean).join(", ") + "    Project No: " + r.projectNo);
+      setCellText(cells(10)[0], "Apt. / Site #: " + r.apt);
+      setCellText(cells(10)[1], "Street # and Name: " + r.street);
+      setCellText(cells(10)[2], "Municipality: " + r.municipality);
+      const type = r.houseType === "Other" && r.houseOther ? "Other: " + r.houseOther : (r.houseType || "");
+      setCellText(cells(11)[0], "Type of House: " + ["Mini-home","Bungalow","Single Unit","Duplex","Other"].map(opt => opt === r.houseType ? opt + " [X]" : opt).join("   ") + (r.houseOther ? "  " + r.houseOther : ""));
+      setCellText(cells(12)[0], "Basement: " + yn(r.basement));
+      setCellText(cells(12)[1], "If Yes, Type: " + ["Crawl Space","Full Basement"].map(opt => opt === r.basementType ? opt + " [X]" : opt).join("   "));
+      setCellText(cells(13)[0], "NB Power Meter #: " + r.meter);
+    }
+    function fillRated(table, r, names) {
+      nodes(table, "tr").forEach(tr => {
+        const cells = nodes(tr, "tc");
+        if (cells.length < 4) return;
+        const name = cellText(cells[0]);
+        if (!names.includes(name) || !r.items[name]) return;
+        const item = r.items[name];
+        const good = 1, fair = cells.length >= 5 ? 2 : -1, replace = cells.length >= 5 ? 3 : 2, comment = cells.length - 1;
+        setCellText(cells[good], item.status === "Good" ? "X" : "");
+        if (fair >= 0) setCellText(cells[fair], item.status === "Fair" ? "X" : "");
+        setCellText(cells[replace], item.status === "Replace" ? "X" : "");
+        if (!cellText(cells[comment]).includes(":")) setCellText(cells[comment], item.comment || "");
+        else if (item.comment) setCellText(cells[comment], cellText(cells[comment]).split(":")[0] + ": " + item.comment);
+      });
+    }
+    function setPair(table, label, left, right) {
+      nodes(table, "tr").forEach(tr => {
+        const cells = nodes(tr, "tc");
+        if (cells[0] && (cellText(cells[0]) === label || cellText(cells[0]).startsWith(label))) {
+          setCellText(cells[1], left.replace(label, "").trim() ? left : left);
+          if (cells[2]) setCellText(cells[2], right);
         }
-
-        // Direct Text & Pattern Replacement Approach
-        async function fillOriginalTemplate() {
-            const btnText = document.getElementById('btnText');
-            btnText.innerText = "Filling Word File...";
-
-            try {
-                if (!loadedTemplateArrayBuffer) {
-                    alert("Please upload a .docx file using the top button, or put template.docx in your repo!");
-                    return;
-                }
-
-                const val = (id) => document.getElementById(id)?.value || '';
-
-                const zip = await JSZip.loadAsync(loadedTemplateArrayBuffer);
-                let xmlText = await zip.file("word/document.xml").async("string");
-
-                // Replacement Map (Target Key / Pattern -> New Value)
-                const textReplacements = [
-                    { search: /Inspector Name:?/gi, replace: `Inspector Name: ${val('inspector_first')} ${val('inspector_last')}` },
-                    { search: /Date of Inspection:?/gi, replace: `Date of Inspection: ${val('inspection_date')}` },
-                    { search: /Tenant Name:?/gi, replace: `Tenant Name: ${val('tenant_first')} ${val('tenant_last')}` },
-                    { search: /Project No\.?:?/gi, replace: `Project No.: ${val('project_no')}` },
-                    { search: /Apt\.\/Site #:?/gi, replace: `Apt./Site #: ${val('apt_site')}` },
-                    { search: /Street #:?/gi, replace: `Street #: ${val('street_name')}` },
-                    { search: /Municipality:?/gi, replace: `Municipality: ${val('municipality')}` }
-                ];
-
-                // Perform regex replacements directly on Word document.xml
-                textReplacements.forEach(item => {
-                    xmlText = xmlText.replace(item.search, item.replace);
-                });
-
-                // Write modified XML back
-                zip.file("word/document.xml", xmlText);
-
-                const outBlob = await zip.generateAsync({
-                    type: "blob",
-                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                });
-
-                const fileName = `Annual_Inspection_${val('apt_site') || 'Report'}.docx`;
-                const file = new File([outBlob], fileName, { type: outBlob.type });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        title: 'Annual Inspection Report',
-                        files: [file]
-                    });
-                } else {
-                    saveAs(outBlob, fileName);
-                }
-
-            } catch (error) {
-                console.error("Filling template error:", error);
-                alert("Error filling Word document:\n" + error.message);
-            } finally {
-                btnText.innerText = "Fill & Export Original Word";
-            }
+      });
+    }
+    function fillInsulation(table, r) {
+      nodes(table, "tr").forEach(tr => {
+        const cells = nodes(tr, "tc");
+        if (cellText(cells[0]) === "Basement") {
+          setCellText(cells[1], ["8 ft","4 ft down"].map(opt => opt === r.insulDepth ? opt + " [X]" : opt).join("     "));
+          setCellText(cells[2], "Type: " + (r.insulType || ""));
         }
-    </script>
+        if (cellText(cells[0]) === "Attic") {
+          setCellText(cells[1], ["Fiberglass","Loose"].map(opt => opt === r.attic ? opt + " [X]" : opt).join("     "));
+          setCellText(cells[2], "Conditions: " + (r.atticConditions || ""));
+        }
+      });
+    }
+    function fillPlumbingExtras(table, r) {
+      nodes(table, "tr").forEach(tr => {
+        const cells = nodes(tr, "tc");
+        const label = cellText(cells[0]);
+        if (label === "Shower Walls" && cells.length > 4) setCellText(cells[4], "Type: " + ["Ceramic","Enclosure"].map(opt => opt === r.showerType ? opt + " [X]" : opt).join("   "));
+        if (label === "Hot Water Tank" && cells.length > 4) setCellText(cells[4], "Capacity: " + (r.hwtCapacity || ""));
+        if (cellText(cells[cells.length - 1]).startsWith("Date:")) setCellText(cells[cells.length - 1], "Date: " + (r.hwtDate || ""));
+        if (cellText(cells[cells.length - 1]).includes("Leased")) setCellText(cells[cells.length - 1], ["Leased","Owned"].map(opt => opt === r.hwtOwn ? opt + " [X]" : opt).join("     "));
+        if (cellText(cells[cells.length - 1]).startsWith("Make:")) setCellText(cells[cells.length - 1], "Make: " + (r.hwtMake || ""));
+        if (label.startsWith("Water Leaks")) {
+          setCellText(cells[0], "Water Leaks: " + yn(r.leaks));
+          if (cells[1]) setCellText(cells[1], "If Yes Add Location: " + (r.leakLocation || ""));
+        }
+        if (label.startsWith("Water Test")) setCellText(cells[0], "Water Test Collected: " + yn(r.waterTest));
+      });
+    }
+    function fillElectrical(table, r) {
+      const rows = nodes(table, "tr");
+      let gfci = 0;
+      let smoke = 0;
+      rows.forEach((tr, ri) => {
+        const cells = nodes(tr, "tc");
+        const a = cellText(cells[0] || null);
+        const b = cells[1] ? cellText(cells[1]) : "";
+        if (HEATING.includes(b) && r.items[b]) {
+          const item = r.items[b];
+          setCellText(cells[2], item.status === "Good" ? "X" : "");
+          setCellText(cells[3], item.status === "Replace" ? "X" : "");
+          setCellText(cells[4], item.comment || "");
+        }
+        let key = a;
+        if (a === "GFCI Outlets") key = gfci++ === 0 ? "GFCI Outlets" : "GFCI Outlets 2";
+        if (ELECTRICAL.includes(key) && r.items[key] && cells.length >= 4) {
+          setCellText(cells[1], r.items[key].status === "Good" ? "X" : "");
+          setCellText(cells[2], r.items[key].status === "Replace" ? "X" : "");
+          setCellText(cells[3], r.items[key].comment || "");
+        }
+        if (a === "Smoke Detector") {
+          const s = r.smokes[smoke++] || smoke();
+          setCellText(cells[1], s.status === "Good" ? "X" : "");
+          setCellText(cells[2], s.status === "Replace" ? "X" : "");
+          setCellText(cells[3], "Location: " + [s.location, s.comment].filter(Boolean).join(" — "));
+          const rest = ["Type: " + (s.type || ""), "Expired Date: " + (s.expired || ""), "Battery Charged: " + yn(s.battery), "Tested Unit: " + yn(s.tested)];
+          for (let n = 0; n < 4; n++) {
+            const sib = rows[ri + 1 + n];
+            if (!sib) break;
+            const sc = nodes(sib, "tc");
+            if (cellText(sc[0])) break;
+            setCellText(sc[sc.length - 1], rest[n]);
+          }
+        }
+      });
+    }
+    function fillAppliances(table, r) {
+      nodes(table, "tr").forEach(tr => {
+        const cells = nodes(tr, "tc");
+        const a = cellText(cells[0]);
+        if (a.startsWith("Visible Mold")) {
+          setCellText(cells[1], yn(r.mold));
+          if (cells[2]) setCellText(cells[2], "If yes Add Location: " + (r.moldLocation || ""));
+        }
+        if (a.startsWith("Serial")) { setCellText(cells[0], "Serial #: " + r.ovenSerial); setCellText(cells[1], "Serial #: " + r.fridgeSerial); }
+        if (a.startsWith("Model")) { setCellText(cells[0], "Model #: " + r.ovenModel); setCellText(cells[1], "Model #: " + r.fridgeModel); }
+        if (a.startsWith("Make")) { setCellText(cells[0], "Make #: " + r.ovenMake); setCellText(cells[1], "Make #: " + r.fridgeMake); }
+        if (a.startsWith("Comment")) { setCellText(cells[0], "Comment: " + r.ovenComment); setCellText(cells[1], "Comment: " + r.fridgeComment); }
+      });
+    }
+
+    mountChecks("exterior", EXTERIOR, ["Good","Fair","Replace"]);
+    mountChecks("interior", INTERIOR, ["Good","Fair","Replace"]);
+    mountChecks("plumbing", PLUMBING, ["Good","Fair","Replace"]);
+    mountChecks("heating", HEATING, ["Good","Replace"]);
+    mountChecks("electrical", ELECTRICAL, ["Good","Replace"]);
+    mountChecks("vents", VENTS, ["Good","Fair","Replace"]);
+    mountSmokes();
+    renderList();
+    fetch("template.docx").then(res => res.ok ? res.arrayBuffer() : null).then(buf => { templateBuffer = buf; }).catch(() => {});
+  </script>
 </body>
 </html>
