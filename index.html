@@ -66,10 +66,8 @@
       <button type="button" id="newBtn">+ New</button>
     </div>
     <div class="wrap">
-      <p class="hint">Records stay in this browser. Export fills template.docx. Export JSON before changing phones.</p>
+      <p class="hint">Records stay in this browser. Use Text to review on screen. Export Word to share.</p>
       <div class="card" id="recordList"></div>
-      <button class="btn btn-ghost" id="importBtn" type="button">Import JSON</button>
-      <input id="importFile" type="file" accept="application/json" class="hidden">
     </div>
   </div>
 
@@ -80,6 +78,7 @@
       <button type="button" id="saveBtn">Save</button>
     </div>
     <form class="wrap" id="form">
+      <pre id="textPreview" class="card hidden" style="white-space:pre-wrap;font-size:13px;"></pre>
       <div class="card">
         <h2>Inspector</h2>
         <div class="g2">
@@ -237,7 +236,7 @@
     </form>
     <div class="bar">
       <div class="inner">
-        <button class="btn btn-ghost" type="button" id="jsonBtn">JSON</button>
+        <button class="btn btn-ghost" type="button" id="textBtn">Text</button>
         <button class="btn btn-primary" type="button" id="exportBtn">Export Word</button>
       </div>
     </div>
@@ -453,21 +452,34 @@
         if (!checked || !checked.value) radio.checked = true;
       });
     };
-    document.getElementById("jsonBtn").onclick = () => {
+    function showText() {
       const r = saveCurrent();
-      const blob = new Blob([JSON.stringify(r, null, 2)], { type: "application/json" });
-      saveAs(blob, fileBase(r) + ".json");
-    };
-    document.getElementById("importBtn").onclick = () => document.getElementById("importFile").click();
-    document.getElementById("importFile").onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const data = JSON.parse(await file.text());
-      const incoming = Array.isArray(data) ? data : [data];
-      incoming.forEach(r => { if (!r.id) r.id = uid(); records.push(r); });
-      persist();
-      renderList();
-    };
+      const lines = [];
+      lines.push("ANNUAL INSPECTION");
+      lines.push([r.apt, r.street, r.municipality].filter(Boolean).join(", ") || "No address");
+      lines.push("Project: " + (r.projectNo || ""));
+      lines.push("Date: " + (r.inspectionDate || ""));
+      lines.push("Inspector: " + [r.inspectorFirst, r.inspectorLast].filter(Boolean).join(" "));
+      lines.push("Tenant: " + [r.tenantFirst, r.tenantLast].filter(Boolean).join(" "));
+      lines.push("");
+      Object.entries(r.items || {}).forEach(([name, item]) => {
+        if (!item.status && !item.comment) return;
+        lines.push(name + ": " + (item.status || "") + (item.comment ? " — " + item.comment : ""));
+      });
+      (r.smokes || []).forEach((s, i) => {
+        if (!s.status && !s.location && !s.comment) return;
+        lines.push("Smoke " + (i + 1) + ": " + [s.status, s.location, s.type, s.expired, s.comment].filter(Boolean).join(" — "));
+      });
+      if (r.mold) lines.push("Mold: " + r.mold + (r.moldLocation ? " — " + r.moldLocation : ""));
+      if (r.leaks) lines.push("Water leaks: " + r.leaks + (r.leakLocation ? " — " + r.leakLocation : ""));
+      if (r.notify) lines.push("Notify program officer: " + r.notify);
+      if (r.miscellaneous) lines.push("Notes: " + r.miscellaneous);
+      const box = document.getElementById("textPreview");
+      box.textContent = lines.join("\n");
+      box.classList.remove("hidden");
+      box.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    document.getElementById("textBtn").onclick = () => showText();
     document.getElementById("exportBtn").onclick = exportWord;
 
     function fileBase(r) {
@@ -516,22 +528,51 @@
       if (!tc) return "";
       return nodes(tc, "t").map(t => t.textContent || "").join("").replace(/\s+/g, " ").trim();
     }
-    function setCellText(tc, text) {
-      const ts = nodes(tc, "t");
-      if (ts.length) {
-        ts[0].textContent = text;
-        ts[0].setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
-        for (let i = 1; i < ts.length; i++) ts[i].textContent = "";
+    function setCellText(tc, text, center) {
+      const ps = nodes(tc, "p");
+      for (let i = ps.length - 1; i >= 1; i--) ps[i].parentNode.removeChild(ps[i]);
+      let p = nodes(tc, "p")[0];
+      if (!p) {
+        p = docEl(tc, "p");
+        tc.appendChild(p);
+      }
+      if (center) {
+        let pPr = nodes(p, "pPr")[0];
+        if (!pPr) {
+          pPr = docEl(tc, "pPr");
+          p.insertBefore(pPr, p.firstChild);
+        }
+        let jc = nodes(pPr, "jc")[0];
+        if (!jc) {
+          jc = docEl(tc, "jc");
+          pPr.appendChild(jc);
+        }
+        jc.setAttributeNS(W, "w:val", "center");
+        let tcPr = nodes(tc, "tcPr")[0];
+        if (!tcPr) {
+          tcPr = docEl(tc, "tcPr");
+          tc.insertBefore(tcPr, tc.firstChild);
+        }
+        let vAlign = nodes(tcPr, "vAlign")[0];
+        if (!vAlign) {
+          vAlign = docEl(tc, "vAlign");
+          tcPr.appendChild(vAlign);
+        }
+        vAlign.setAttributeNS(W, "w:val", "center");
+      }
+      const ts = nodes(p, "t");
+      if (!ts.length) {
+        const run = docEl(tc, "r");
+        const t = docEl(tc, "t");
+        t.setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
+        t.textContent = text;
+        run.appendChild(t);
+        p.appendChild(run);
         return;
       }
-      const p = docEl(tc, "p");
-      const run = docEl(tc, "r");
-      const t = docEl(tc, "t");
-      t.setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
-      t.textContent = text;
-      run.appendChild(t);
-      p.appendChild(run);
-      tc.appendChild(p);
+      ts[0].textContent = text;
+      ts[0].setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
+      for (let i = 1; i < ts.length; i++) ts[i].textContent = "";
     }
     function docEl(tc, tag) { return tc.ownerDocument.createElementNS(W, "w:" + tag); }
     function mark(value, option) { return value === option ? option + " [X]" : option; }
@@ -599,12 +640,12 @@
         if (!names.includes(name) || !r.items[name]) return;
         const item = r.items[name];
         const good = 1, fair = cells.length >= 5 ? 2 : -1, replace = cells.length >= 5 ? 3 : 2, comment = cells.length - 1;
-        setCellText(cells[good], item.status === "Good" ? "X" : "");
-        if (fair >= 0) setCellText(cells[fair], item.status === "Fair" ? "X" : "");
-        setCellText(cells[replace], item.status === "Replace" ? "X" : "");
+        setCellText(cells[good], item.status === "Good" ? "X" : "", true);
+        if (fair >= 0) setCellText(cells[fair], item.status === "Fair" ? "X" : "", true);
+        setCellText(cells[replace], item.status === "Replace" ? "X" : "", true);
         const note = item.status === "NA" ? (item.comment ? "NA. " + item.comment : "NA") : (item.comment || "");
-        if (!cellText(cells[comment]).includes(":")) setCellText(cells[comment], note);
-        else if (note) setCellText(cells[comment], cellText(cells[comment]).split(":")[0] + ": " + note);
+        if (!cellText(cells[comment]).includes(":")) setCellText(cells[comment], note, true);
+        else if (note) setCellText(cells[comment], note, true);
       });
     }
     function setPair(table, label, left, right) {
@@ -656,22 +697,22 @@
         if (HEATING.includes(b) && r.items[b]) {
           const item = r.items[b];
           const note = item.status === "NA" ? (item.comment ? "NA. " + item.comment : "NA") : (item.comment || "");
-          setCellText(cells[2], item.status === "Good" ? "X" : "");
-          setCellText(cells[3], item.status === "Replace" ? "X" : "");
-          setCellText(cells[4], note);
+          setCellText(cells[2], item.status === "Good" ? "X" : "", true);
+          setCellText(cells[3], item.status === "Replace" ? "X" : "", true);
+          setCellText(cells[4], note, true);
         }
         let key = a;
         if (a === "GFCI Outlets") key = gfci++ === 0 ? "GFCI Outlets" : "GFCI Outlets 2";
         if (ELECTRICAL.includes(key) && r.items[key] && cells.length >= 4) {
           const note = r.items[key].status === "NA" ? (r.items[key].comment ? "NA. " + r.items[key].comment : "NA") : (r.items[key].comment || "");
-          setCellText(cells[1], r.items[key].status === "Good" ? "X" : "");
-          setCellText(cells[2], r.items[key].status === "Replace" ? "X" : "");
-          setCellText(cells[3], note);
+          setCellText(cells[1], r.items[key].status === "Good" ? "X" : "", true);
+          setCellText(cells[2], r.items[key].status === "Replace" ? "X" : "", true);
+          setCellText(cells[3], note, true);
         }
         if (a === "Smoke Detector") {
           const s = r.smokes[smoke++] || smoke();
-          setCellText(cells[1], s.status === "Good" ? "X" : "");
-          setCellText(cells[2], s.status === "Replace" ? "X" : "");
+          setCellText(cells[1], s.status === "Good" ? "X" : "", true);
+          setCellText(cells[2], s.status === "Replace" ? "X" : "", true);
           setCellText(cells[3], "Location: " + [s.status === "NA" ? "NA" : "", s.location, s.comment].filter(Boolean).join(" — "));
           const rest = ["Type: " + (s.type || ""), "Expired Date: " + (s.expired || ""), "Battery Charged: " + yn(s.battery), "Tested Unit: " + yn(s.tested)];
           for (let n = 0; n < 4; n++) {
