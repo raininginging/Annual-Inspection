@@ -6,8 +6,9 @@
     <title>HNB Annual Inspection Form</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- docx.js Library for Pure JS Word Generation -->
-    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+    <!-- JSZip for Direct Word XML Manipulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         input, select, textarea { font-size: 16px !important; }
     </style>
@@ -17,8 +18,13 @@
     <!-- Header -->
     <header class="bg-blue-700 text-white p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-lg font-bold">HNB Annual Inspection Report</h1>
-            <span class="text-xs bg-blue-800 px-2 py-1 rounded">Mobile Form</span>
+            <h1 class="text-lg font-bold">HNB Inspection Form</h1>
+            <div>
+                <label for="templateUpload" class="text-xs bg-blue-800 border border-blue-400 text-white px-2.5 py-1.5 rounded cursor-pointer font-medium hover:bg-blue-600">
+                    📂 Upload Word (.docx)
+                </label>
+                <input type="file" id="templateUpload" accept=".docx" class="hidden" onchange="handleTemplateUpload(event)">
+            </div>
         </div>
     </header>
 
@@ -154,14 +160,45 @@
 
     <!-- Floating Share Button -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-lg flex gap-3 max-w-3xl mx-auto">
-        <button type="button" id="shareBtn" onclick="generateAndShareDocx()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center">
+        <button type="button" id="shareBtn" onclick="fillOriginalTemplate()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-            <span id="btnText">Generate & Share Word (.docx)</span>
+            <span id="btnText">Fill & Export Original Word</span>
         </button>
     </div>
 
     <script>
         document.getElementById('inspection_date').valueAsDate = new Date();
+
+        let loadedTemplateArrayBuffer = null;
+
+        // Auto load template.docx from repo root
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch('template.docx')
+                .then(res => {
+                    if (res.ok) return res.arrayBuffer();
+                    throw new Error("Default template.docx not found.");
+                })
+                .then(buffer => {
+                    loadedTemplateArrayBuffer = buffer;
+                    console.log("Default Word template loaded successfully.");
+                })
+                .catch(err => {
+                    console.warn("Auto template load warning:", err.message);
+                });
+        });
+
+        // Manual upload
+        function handleTemplateUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    loadedTemplateArrayBuffer = e.target.result;
+                    alert("Original Word Template loaded successfully!");
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
 
         const checklistItems = [
             "Roof", "Siding", "Eaves through", "Windows", "Foundation", 
@@ -177,7 +214,7 @@
             const key = `item_${index}`;
             const html = `
                 <div class="p-3 bg-slate-50 rounded border space-y-2">
-                    <span class="font-bold text-sm text-slate-700">${item}</span>
+                    <span class="font-bold text-sm text-slate-700">${index + 1}. ${item}</span>
                     <div class="grid grid-cols-4 gap-1.5">
                         <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Good" onchange="handleStatusChange(${index}, 'Good')" checked> Good</label>
                         <label class="text-center p-2 rounded bg-white border text-xs cursor-pointer"><input type="radio" name="${key}_status" value="Fair" onchange="handleStatusChange(${index}, 'Fair')"> Fair</label>
@@ -209,150 +246,149 @@
             });
         }
 
-        async function generateAndShareDocx() {
+        // Direct XML Manipulation based on original Word structure
+        async function fillOriginalTemplate() {
             const btnText = document.getElementById('btnText');
-            btnText.innerText = "Generating Word File...";
+            btnText.innerText = "Filling Word File...";
 
             try {
-                if (!window.docx) {
-                    throw new Error("docx library loading failed, please check network.");
+                if (!loadedTemplateArrayBuffer) {
+                    alert("Please upload a .docx file using the top button, or put template.docx in your repo!");
+                    return;
                 }
-
-                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } = window.docx;
 
                 const val = (id) => document.getElementById(id)?.value || '';
 
-                const thinBorder = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
-                const borders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+                const zip = await JSZip.loadAsync(loadedTemplateArrayBuffer);
+                let xmlText = await zip.file("word/document.xml").async("string");
 
-                // Robust cell creator using DXA widths
-                const cell = (text, widthDxa, bold = false, align = AlignmentType.LEFT, span = 1) => {
-                    return new TableCell({
-                        children: [new Paragraph({
-                            alignment: align,
-                            children: [new TextRun({ text: String(text || ''), bold: bold, size: 18, font: "Calibri" })]
-                        })],
-                        width: { size: widthDxa, type: WidthType.DXA },
-                        columnSpan: span,
-                        borders: borders
-                    });
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+
+                // Helper: Replace or append text into XML cell
+                const fillCell = (cell, text) => {
+                    if (!cell) return;
+                    let p = cell.querySelector("p");
+                    if (!p) {
+                        p = xmlDoc.createElement("w:p");
+                        cell.appendChild(p);
+                    }
+                    p.innerHTML = ''; // Clear original empty text
+                    const r = xmlDoc.createElement("w:r");
+                    const t = xmlDoc.createElement("w:t");
+                    t.textContent = String(text || '');
+                    r.appendChild(t);
+                    p.appendChild(r);
                 };
 
-                const rows = [];
+                const tables = xmlDoc.querySelectorAll("w:tbl");
+                if (tables.length > 0) {
+                    const mainTable = tables[0];
+                    const rows = mainTable.querySelectorAll("w:tr");
 
-                // Title
-                rows.push(new TableRow({
-                    children: [cell("ANNUAL INSPECTION FORM - HNB", 9600, true, AlignmentType.CENTER, 10)]
-                }));
+                    // 1. Fill Header / Basic Info Rows
+                    if (rows.length > 1) {
+                        const cells = rows[1].querySelectorAll("w:tc");
+                        if (cells.length >= 4) fillCell(cells[1], `${val('inspector_first')} ${val('inspector_last')}`);
+                        if (cells.length >= 4) fillCell(cells[3], val('inspection_date'));
+                    }
+                    if (rows.length > 2) {
+                        const cells = rows[2].querySelectorAll("w:tc");
+                        if (cells.length >= 4) fillCell(cells[1], `${val('tenant_first')} ${val('tenant_last')}`);
+                        if (cells.length >= 4) fillCell(cells[3], val('project_no'));
+                    }
+                    if (rows.length > 3) {
+                        const cells = rows[3].querySelectorAll("w:tc");
+                        if (cells.length >= 4) fillCell(cells[1], val('tenant_phone_day'));
+                        if (cells.length >= 4) fillCell(cells[3], val('apt_site'));
+                    }
+                    if (rows.length > 4) {
+                        const cells = rows[4].querySelectorAll("w:tc");
+                        if (cells.length >= 4) fillCell(cells[1], val('street_name'));
+                        if (cells.length >= 4) fillCell(cells[3], val('municipality'));
+                    }
+                    if (rows.length > 5) {
+                        const cells = rows[5].querySelectorAll("w:tc");
+                        if (cells.length >= 4) fillCell(cells[1], val('house_type'));
+                        if (cells.length >= 4) fillCell(cells[3], val('basement_exist'));
+                    }
 
-                // Info Rows (Total width = 9600 DXA)
-                const addInfoRow = (lbl1, val1, lbl2, val2) => {
-                    rows.push(new TableRow({
-                        children: [
-                            cell(lbl1, 1600, true),
-                            cell(val1, 3200, false, AlignmentType.LEFT, 4),
-                            cell(lbl2, 1600, true),
-                            cell(val2, 3200, false, AlignmentType.LEFT, 4)
-                        ]
-                    }));
-                };
+                    // 2. Fill Inspection Checklist Rows (Row 7 onwards)
+                    const startRow = 7;
+                    const half = Math.ceil(checklistItems.length / 2);
 
-                addInfoRow("Inspector:", `${val('inspector_first')} ${val('inspector_last')}`, "Date:", val('inspection_date'));
-                addInfoRow("Tenant Name:", `${val('tenant_first')} ${val('tenant_last')}`, "Project No:", val('project_no'));
-                addInfoRow("Day Phone:", val('tenant_phone_day'), "Apt / Site #:", val('apt_site'));
-                addInfoRow("Street Name:", val('street_name'), "Municipality:", val('municipality'));
-                addInfoRow("Type of House:", val('house_type'), "Basement:", val('basement_exist'));
+                    for (let i = 0; i < half; i++) {
+                        const rowIndex = startRow + i;
+                        if (rowIndex >= rows.length) break;
 
-                // Header for Checklist
-                rows.push(new TableRow({
-                    children: [
-                        cell("ITEM", 1600, true), cell("G", 400, true, AlignmentType.CENTER), cell("F", 400, true, AlignmentType.CENTER), cell("R", 400, true, AlignmentType.CENTER), cell("COMMENTS", 2000, true),
-                        cell("ITEM", 1600, true), cell("G", 400, true, AlignmentType.CENTER), cell("F", 400, true, AlignmentType.CENTER), cell("R", 400, true, AlignmentType.CENTER), cell("COMMENTS", 2000, true)
-                    ]
-                }));
+                        const rowCells = rows[rowIndex].querySelectorAll("w:tc");
 
-                // Checklist Items
-                const half = Math.ceil(checklistItems.length / 2);
-                for (let i = 0; i < half; i++) {
-                    const getItemData = (idx) => {
-                        if (idx >= checklistItems.length) return { item: '', g: '', f: '', r: '', c: '' };
-                        const st = document.querySelector(`input[name="item_${idx}_status"]:checked`)?.value || 'Good';
-                        const comm = document.getElementById(`item_${idx}_comment`)?.value || '';
-                        return {
-                            item: checklistItems[idx],
-                            g: st === 'Good' ? '✓' : '',
-                            f: st === 'Fair' ? '✓' : '',
-                            r: st === 'Replace/Repair' ? '✓' : '',
-                            c: st === 'Not Inspected' && !comm ? 'N/A' : comm
-                        };
-                    };
+                        // Left Side Item
+                        const st1 = document.querySelector(`input[name="item_${i}_status"]:checked`)?.value || 'Good';
+                        const comm1 = document.getElementById(`item_${i}_comment`)?.value || '';
+                        if (rowCells.length >= 5) {
+                            fillCell(rowCells[1], st1 === 'Good' ? '✓' : '');
+                            fillCell(rowCells[2], st1 === 'Fair' ? '✓' : '');
+                            fillCell(rowCells[3], st1 === 'Replace/Repair' ? '✓' : '');
+                            fillCell(rowCells[4], st1 === 'Not Inspected' && !comm1 ? 'N/A' : comm1);
+                        }
 
-                    const left = getItemData(i);
-                    const right = getItemData(i + half);
+                        // Right Side Item
+                        const idx2 = i + half;
+                        if (idx2 < checklistItems.length && rowCells.length >= 10) {
+                            const st2 = document.querySelector(`input[name="item_${idx2}_status"]:checked`)?.value || 'Good';
+                            const comm2 = document.getElementById(`item_${idx2}_comment`)?.value || '';
+                            fillCell(rowCells[6], st2 === 'Good' ? '✓' : '');
+                            fillCell(rowCells[7], st2 === 'Fair' ? '✓' : '');
+                            fillCell(rowCells[8], st2 === 'Replace/Repair' ? '✓' : '');
+                            fillCell(rowCells[9], st2 === 'Not Inspected' && !comm2 ? 'N/A' : comm2);
+                        }
+                    }
 
-                    rows.push(new TableRow({
-                        children: [
-                            cell(left.item, 1600), cell(left.g, 400, false, AlignmentType.CENTER), cell(left.f, 400, false, AlignmentType.CENTER), cell(left.r, 400, false, AlignmentType.CENTER), cell(left.c, 2000),
-                            cell(right.item, 1600), cell(right.g, 400, false, AlignmentType.CENTER), cell(right.f, 400, false, AlignmentType.CENTER), cell(right.r, 400, false, AlignmentType.CENTER), cell(right.c, 2000)
-                        ]
-                    }));
+                    // 3. Fill Bottom Appliance & Notes Rows
+                    const totalRows = rows.length;
+                    if (totalRows >= 4) {
+                        const ovenCell = rows[totalRows - 4].querySelectorAll("w:tc");
+                        if (ovenCell.length >= 2) fillCell(ovenCell[1], `${val('oven_serial')} / ${val('oven_model')} / ${val('oven_make')}`);
+
+                        const fridgeCell = rows[totalRows - 3].querySelectorAll("w:tc");
+                        if (fridgeCell.length >= 2) fillCell(fridgeCell[1], `${val('fridge_serial')} / ${val('fridge_model')} / ${val('fridge_make')}`);
+
+                        const officerCell = rows[totalRows - 2].querySelectorAll("w:tc");
+                        if (officerCell.length >= 2) fillCell(officerCell[1], val('notify_officer'));
+
+                        const miscCell = rows[totalRows - 1].querySelectorAll("w:tc");
+                        if (miscCell.length >= 2) fillCell(miscCell[1], val('miscellaneous'));
+                    }
                 }
 
-                // Footer Rows
-                const addFullRow = (label, value) => {
-                    rows.push(new TableRow({
-                        children: [
-                            cell(label, 2400, true, AlignmentType.LEFT, 2),
-                            cell(value, 7200, false, AlignmentType.LEFT, 8)
-                        ]
-                    }));
-                };
+                // Serialize XML back into docx zip package
+                const serializer = new XMLSerializer();
+                const newXmlText = serializer.serializeToString(xmlDoc);
+                zip.file("word/document.xml", newXmlText);
 
-                addFullRow("Oven Serial / Model / Make:", `${val('oven_serial')} / ${val('oven_model')} / ${val('oven_make')}`);
-                addFullRow("Fridge Serial / Model / Make:", `${val('fridge_serial')} / ${val('fridge_model')} / ${val('fridge_make')}`);
-                addFullRow("Notify Officer ASAP?", val('notify_officer'));
-                addFullRow("Miscellaneous / Comments:", val('miscellaneous'));
-
-                const table = new Table({
-                    rows: rows,
-                    width: { size: 9600, type: WidthType.DXA }
+                const outBlob = await zip.generateAsync({
+                    type: "blob",
+                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 });
-
-                const doc = new Document({
-                    sections: [{
-                        properties: {
-                            page: {
-                                margin: { top: 500, bottom: 500, left: 500, right: 500 }
-                            }
-                        },
-                        children: [table]
-                    }]
-                });
-
-                const outBlob = await Packer.toBlob(doc);
 
                 const fileName = `Annual_Inspection_${val('apt_site') || 'Report'}.docx`;
-                const file = new File([outBlob], fileName, { 
-                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-                });
+                const file = new File([outBlob], fileName, { type: outBlob.type });
 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         title: 'Annual Inspection Report',
-                        text: 'Please find attached the completed Annual Inspection Word document.',
                         files: [file]
                     });
                 } else {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(outBlob);
-                    link.download = fileName;
-                    link.click();
+                    saveAs(outBlob, fileName);
                 }
+
             } catch (error) {
-                console.error("Docx generation failed:", error);
-                alert("Error rendering Word document:\n" + error.message);
+                console.error("Filling template error:", error);
+                alert("Error filling Word document:\n" + error.message);
             } finally {
-                btnText.innerText = "Generate & Share Word (.docx)";
+                btnText.innerText = "Fill & Export Original Word";
             }
         }
     </script>
