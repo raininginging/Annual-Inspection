@@ -30,10 +30,14 @@
       width: 100%; max-width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fff;
     }
     textarea { min-height: 64px; resize: vertical; }
-    .g2, .g3 { display: grid; gap: 8px; max-width: 100%; }
-    .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .g2, .g3 { display: grid; gap: 8px; max-width: 100%; grid-template-columns: minmax(0, 1fr); }
     .g2 > *, .g3 > * { min-width: 0; max-width: 100%; }
+    input, select, textarea { max-width: 100%; min-width: 0; }
+    input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), select, textarea { width: 100%; }
+    @media (min-width: 680px) {
+      .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
     .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
     .row:last-child { border-bottom: 0; }
     .item-name { font-weight: 650; font-size: 14px; overflow-wrap: anywhere; }
@@ -45,7 +49,7 @@
     .btn { border: 0; border-radius: 10px; padding: 12px 10px; font-weight: 700; }
     .btn-primary { background: var(--blue); color: #fff; flex: 1; }
     .btn-ghost { background: #e8eef7; color: var(--blue); }
-    .list-item { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .list-item { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--line); }
     .list-item button { border: 0; background: #e8eef7; color: var(--blue); border-radius: 8px; padding: 6px 8px; font-weight: 700; font-size: 13px; }
     .list-item strong { display: block; }
     .muted { color: var(--muted); font-size: 13px; }
@@ -340,7 +344,7 @@
         return `<div class="row" style="display:block">
           <div class="item-name">${esc(labelOf(name))}</div>
           <div class="choices">${buttons}<label><input type="radio" name="${id}" value=""> Clear</label></div>
-          <input data-comment="${esc(name)}" placeholder="Comments" style="margin-top:8px">
+          <input data-comment="${esc(name)}" placeholder="Comments" style="margin-top:8px;width:100%;max-width:100%;min-width:0">
         </div>`;
       }).join("");
     }
