@@ -251,6 +251,10 @@
     let currentId = null;
     let templateBuffer = null;
 
+    function uid() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+    }
     function loadRecords() {
       try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
       catch { return []; }
@@ -263,7 +267,7 @@
       HEATING.forEach(name => items[name] = { status: "", comment: "" });
       ELECTRICAL.forEach(name => items[name] = { status: "", comment: "" });
       return {
-        id: crypto.randomUUID(),
+        id: uid(),
         updated: new Date().toISOString(),
         inspectorLast: "ZHANG", inspectorFirst: "Rui", inspectionDate: new Date().toISOString().slice(0, 10),
         tenantLast: "", tenantFirst: "", phoneDay: "", phoneOther: "", email: "",
@@ -314,7 +318,14 @@
         + (r.smokes || []).filter(s => s.status === "Replace").length
         + (r.mold === "YES" ? 1 : 0) + (r.leaks === "YES" ? 1 : 0);
     }
-    function esc(s) { return String(s || "").replace(/[&<>"]/g, c => ({ "&": "&", "<": "<", ">": ">", '"': """ }[c])); }
+    function esc(s) {
+      return String(s || "").replace(/[&<>"]/g, function (c) {
+        if (c === "&") return "\u0026amp;";
+        if (c === "<") return "\u0026lt;";
+        if (c === ">") return "\u0026gt;";
+        return "\u0026quot;";
+      });
+    }
 
     function mountChecks(containerId, names, modes) {
       const box = document.getElementById(containerId);
@@ -445,7 +456,7 @@
       if (!file) return;
       const data = JSON.parse(await file.text());
       const incoming = Array.isArray(data) ? data : [data];
-      incoming.forEach(r => { if (!r.id) r.id = crypto.randomUUID(); records.push(r); });
+      incoming.forEach(r => { if (!r.id) r.id = uid(); records.push(r); });
       persist();
       renderList();
     };
