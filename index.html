@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -15,42 +15,33 @@
       --good: #047857;
     }
     * { box-sizing: border-box; }
-    html, body { max-width: 100%; overflow-x: hidden; }
     body { margin: 0; background: var(--bg); color: #111; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     button, input, select, textarea { font-family: inherit; font-size: 16px; }
     .nav { position: sticky; top: 0; z-index: 20; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; }
-    .nav h1 { font-size: 16px; margin: 0; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .nav button { flex: 0 0 auto; white-space: nowrap; }
+    .nav h1 { font-size: 16px; margin: 0; font-weight: 700; }
     .nav button { background: transparent; color: #fff; border: 0; font-weight: 650; font-size: 15px; padding: 6px; }
     .wrap { max-width: 720px; margin: 0 auto; padding: 14px 14px 96px; }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; max-width: 100%; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
     .card h2 { margin: 0 0 10px; font-size: 15px; color: var(--blue); }
-    label.l { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin: 8px 0 4px; text-transform: uppercase; overflow-wrap: anywhere; line-height: 1.25; }
+    label.l { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin: 8px 0 4px; text-transform: uppercase; }
     input[type="text"], input[type="email"], input[type="date"], input[type="number"], select, textarea {
-      width: 100%; max-width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fff;
+      width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fff;
     }
     textarea { min-height: 64px; resize: vertical; }
-    .g2, .g3 { display: grid; gap: 8px; max-width: 100%; grid-template-columns: minmax(0, 1fr); }
-    .g2 > *, .g3 > * { min-width: 0; max-width: 100%; }
-    input, select, textarea { max-width: 100%; min-width: 0; }
-    input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), select, textarea { width: 100%; }
-    @media (min-width: 680px) {
-      .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    }
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
     .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
     .row:last-child { border-bottom: 0; }
-    .item-name { font-weight: 650; font-size: 14px; overflow-wrap: anywhere; }
+    .item-name { font-weight: 650; font-size: 14px; }
     .choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .choices label { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 13px; background: #fff; max-width: 100%; }
+    .choices label { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 13px; background: #fff; }
     .choices input { margin-right: 4px; }
     .bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); display: flex; gap: 8px; padding: 10px 14px; }
     .bar .inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; width: 100%; }
     .btn { border: 0; border-radius: 10px; padding: 12px 10px; font-weight: 700; }
     .btn-primary { background: var(--blue); color: #fff; flex: 1; }
     .btn-ghost { background: #e8eef7; color: var(--blue); }
-    .list-item { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--line); }
-    .list-item button { border: 0; background: #e8eef7; color: var(--blue); border-radius: 8px; padding: 6px 8px; font-weight: 700; font-size: 13px; }
+    .list-item { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
     .list-item strong { display: block; }
     .muted { color: var(--muted); font-size: 13px; }
     .pill { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 8px; }
@@ -64,25 +55,25 @@
   <div id="listView">
     <div class="nav">
       <h1>Annual Inspection</h1>
-      <button type="button" id="newBtn">+ New</button>
+      <button type="button" id="newBtn">＋ 新建</button>
     </div>
     <div class="wrap">
-      <p class="hint">Records stay on this phone/browser. Export fills template.docx. Export JSON before changing devices.</p>
+      <p class="hint">记录保存在这台手机/浏览器里。导出会填入仓库里的 template.docx。更换设备前请先导出 JSON。</p>
       <div class="card" id="recordList"></div>
-      <button class="btn btn-ghost" id="importBtn" type="button">Import JSON</button>
+      <button class="btn btn-ghost" id="importBtn" type="button">导入 JSON</button>
       <input id="importFile" type="file" accept="application/json" class="hidden">
     </div>
   </div>
 
   <div id="formView" class="hidden">
     <div class="nav">
-      <button type="button" id="backBtn">‹ List</button>
-      <h1>Annual Inspection</h1>
-      <button type="button" id="saveBtn">Save</button>
+      <button type="button" id="backBtn">‹ 列表</button>
+      <h1>年度巡检</h1>
+      <button type="button" id="saveBtn">保存</button>
     </div>
     <form class="wrap" id="form">
       <div class="card">
-        <h2>Inspector</h2>
+        <h2>巡检员 / Inspector</h2>
         <div class="g2">
           <div><label class="l">Last Name</label><input id="inspectorLast" value="ZHANG"></div>
           <div><label class="l">First Name</label><input id="inspectorFirst" value="Rui"></div>
@@ -92,10 +83,10 @@
       </div>
 
       <div class="card">
-        <h2>Tenant</h2>
+        <h2>住户 / Tenant</h2>
         <div class="g2">
           <div><label class="l">Last Name</label><input id="tenantLast"></div>
-          <div><label class="l">First / Middle</label><input id="tenantFirst"></div>
+          <div><label class="l">First & Middle Names</label><input id="tenantFirst"></div>
         </div>
         <div class="g2">
           <div><label class="l">Daytime Phone</label><input id="phoneDay"></div>
@@ -113,7 +104,7 @@
       </div>
 
       <div class="card">
-        <h2>Unit</h2>
+        <h2>地址 / Unit</h2>
         <div class="g2">
           <div><label class="l">Project No</label><input id="projectNo"></div>
           <div><label class="l">Apt. / Site #</label><input id="apt"></div>
@@ -141,7 +132,7 @@
 
       <div class="card">
         <h2>Building Exterior</h2>
-        <p class="hint">For Replace / Repair, write the location in comments. Site photos stay in the phone album; note them in comments.</p>
+        <p class="hint">Replace / Repair 请在备注里写位置。现场照片保存在手机相册，备注里注明即可。</p>
         <div id="exterior"></div>
         <label class="l">Septic rise exists?</label>
         <select id="septicRise"><option value=""></option><option>YES</option><option>NO</option></select>
@@ -233,13 +224,13 @@
         <select id="notify"><option value=""></option><option>YES</option><option>NO</option></select>
         <label class="l">Miscellaneous</label>
         <textarea id="miscellaneous"></textarea>
-        <button class="btn btn-ghost" type="button" id="allGoodBtn" style="margin-top:8px">Mark blanks as Good</button>
+        <button class="btn btn-ghost" type="button" id="allGoodBtn" style="margin-top:8px">未填项全部标 Good</button>
       </div>
     </form>
     <div class="bar">
       <div class="inner">
         <button class="btn btn-ghost" type="button" id="jsonBtn">JSON</button>
-        <button class="btn btn-primary" type="button" id="exportBtn">Export Word</button>
+        <button class="btn btn-primary" type="button" id="exportBtn">导出 Word</button>
       </div>
     </div>
   </div>
@@ -300,14 +291,14 @@
     function renderList() {
       const box = document.getElementById("recordList");
       if (!records.length) {
-        box.innerHTML = "<p class='muted'>No records yet. Tap New at the top right.</p>";
+        box.innerHTML = "<p class='muted'>还没有记录。点右上角新建。</p>";
         return;
       }
       box.innerHTML = records
         .slice()
         .sort((a, b) => (b.updated || "").localeCompare(a.updated || ""))
         .map(r => {
-          const title = [r.apt, r.street].filter(Boolean).join(" ") || "No address";
+          const title = [r.apt, r.street].filter(Boolean).join(" ") || "未填地址";
           const flags = repairCount(r);
           return `<div class="list-item">
             <div>
@@ -316,8 +307,8 @@
             </div>
             <div>
               <span class="pill ${flags ? "pill-bad" : "pill-ok"}">${flags ? flags + " repair" : "no repair"}</span>
-              <button type="button" data-open="${r.id}">Open</button>
-              <button type="button" data-del="${r.id}">Delete</button>
+              <button type="button" data-open="${r.id}">打开</button>
+              <button type="button" data-del="${r.id}">删</button>
             </div>
           </div>`;
         }).join("");
@@ -343,8 +334,8 @@
         const buttons = modes.map(m => `<label><input type="radio" name="${id}" value="${m}"> ${m === "Replace" ? "Repair" : m}</label>`).join("");
         return `<div class="row" style="display:block">
           <div class="item-name">${esc(labelOf(name))}</div>
-          <div class="choices">${buttons}<label><input type="radio" name="${id}" value=""> Clear</label></div>
-          <input data-comment="${esc(name)}" placeholder="Comments" style="margin-top:8px;width:100%;max-width:100%;min-width:0">
+          <div class="choices">${buttons}<label><input type="radio" name="${id}" value=""> 清空</label></div>
+          <input data-comment="${esc(name)}" placeholder="Comments" style="margin-top:8px">
         </div>`;
       }).join("");
     }
@@ -358,7 +349,7 @@
           <div class="choices">
             <label><input type="radio" name="smoke${i}" value="Good"> Good</label>
             <label><input type="radio" name="smoke${i}" value="Replace"> Repair</label>
-            <label><input type="radio" name="smoke${i}" value=""> Clear</label>
+            <label><input type="radio" name="smoke${i}" value=""> 清空</label>
           </div>
           <label class="l">Location</label><input id="smoke${i}location">
           <div class="g2">
@@ -436,12 +427,12 @@
 
     document.getElementById("newBtn").onclick = () => showForm(blank());
     document.getElementById("backBtn").onclick = () => { saveCurrent(); showList(); };
-    document.getElementById("saveBtn").onclick = () => { saveCurrent(); alert("Saved on this browser."); };
+    document.getElementById("saveBtn").onclick = () => { saveCurrent(); alert("已保存到本机浏览器。"); };
     document.getElementById("recordList").onclick = (e) => {
       const open = e.target.getAttribute("data-open");
       const del = e.target.getAttribute("data-del");
       if (open) showForm(records.find(r => r.id === open));
-      if (del && confirm("Delete this inspection record?")) {
+      if (del && confirm("删除这条巡检记录？")) {
         records = records.filter(r => r.id !== del);
         persist();
         renderList();
@@ -479,7 +470,7 @@
     async function ensureTemplate() {
       if (templateBuffer) return templateBuffer;
       const res = await fetch("template.docx");
-      if (!res.ok) throw new Error("template.docx was not found. Open this page from the repo, or place template.docx in the same folder.");
+      if (!res.ok) throw new Error("找不到 template.docx。请在仓库页面打开，或把 template.docx 放在同一目录。");
       templateBuffer = await res.arrayBuffer();
       return templateBuffer;
     }
@@ -487,12 +478,12 @@
     async function exportWord() {
       const r = saveCurrent();
       const btn = document.getElementById("exportBtn");
-      btn.textContent = "Filling form…";
+      btn.textContent = "正在填表…";
       try {
         const zip = await JSZip.loadAsync(await ensureTemplate());
         const xmlText = await zip.file("word/document.xml").async("string");
         const doc = new DOMParser().parseFromString(xmlText, "application/xml");
-        if (doc.getElementsByTagName("parsererror").length) throw new Error("Could not read the Word template.");
+        if (doc.getElementsByTagName("parsererror").length) throw new Error("Word 模板无法解析。");
         fillDocument(doc, r);
         const out = new XMLSerializer().serializeToString(doc);
         zip.file("word/document.xml", out);
@@ -507,7 +498,7 @@
       } catch (err) {
         alert(err.message || String(err));
       } finally {
-        btn.textContent = "Export Word";
+        btn.textContent = "导出 Word";
       }
     }
 
