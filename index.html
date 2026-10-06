@@ -528,51 +528,58 @@
       if (!tc) return "";
       return nodes(tc, "t").map(t => t.textContent || "").join("").replace(/\s+/g, " ").trim();
     }
+    function localNodes(el, local) {
+      if (!el) return [];
+      const out = [];
+      const walk = (node) => {
+        Array.from(node.childNodes || []).forEach(child => {
+          if (child.localName === local || (child.nodeName || "").split(":").pop() === local) out.push(child);
+          else walk(child);
+        });
+      };
+      walk(el);
+      return out;
+    }
     function setCellText(tc, text, center) {
-      const ps = nodes(tc, "p");
-      for (let i = ps.length - 1; i >= 1; i--) ps[i].parentNode.removeChild(ps[i]);
-      let p = nodes(tc, "p")[0];
+      const paras = Array.from(tc.childNodes).filter(n => n.localName === "p" || (n.nodeName || "").split(":").pop() === "p");
+      paras.slice(1).forEach(p => p.parentNode.removeChild(p));
+      let p = paras[0];
       if (!p) {
         p = docEl(tc, "p");
         tc.appendChild(p);
       }
+      Array.from(p.childNodes).forEach(n => {
+        const name = n.localName || (n.nodeName || "").split(":").pop();
+        if (name !== "pPr") p.removeChild(n);
+      });
+      let pPr = Array.from(p.childNodes).find(n => (n.localName || (n.nodeName || "").split(":").pop()) === "pPr");
+      if (!pPr) {
+        pPr = docEl(tc, "pPr");
+        p.insertBefore(pPr, p.firstChild);
+      }
       if (center) {
-        let pPr = nodes(p, "pPr")[0];
-        if (!pPr) {
-          pPr = docEl(tc, "pPr");
-          p.insertBefore(pPr, p.firstChild);
-        }
-        let jc = nodes(pPr, "jc")[0];
+        let jc = Array.from(pPr.childNodes).find(n => (n.localName || (n.nodeName || "").split(":").pop()) === "jc");
         if (!jc) {
           jc = docEl(tc, "jc");
           pPr.appendChild(jc);
         }
         jc.setAttributeNS(W, "w:val", "center");
-        let tcPr = nodes(tc, "tcPr")[0];
-        if (!tcPr) {
-          tcPr = docEl(tc, "tcPr");
-          tc.insertBefore(tcPr, tc.firstChild);
-        }
-        let vAlign = nodes(tcPr, "vAlign")[0];
-        if (!vAlign) {
-          vAlign = docEl(tc, "vAlign");
-          tcPr.appendChild(vAlign);
-        }
-        vAlign.setAttributeNS(W, "w:val", "center");
       }
-      const ts = nodes(p, "t");
-      if (!ts.length) {
-        const run = docEl(tc, "r");
-        const t = docEl(tc, "t");
-        t.setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
-        t.textContent = text;
-        run.appendChild(t);
-        p.appendChild(run);
-        return;
+      let spacing = Array.from(pPr.childNodes).find(n => (n.localName || (n.nodeName || "").split(":").pop()) === "spacing");
+      if (!spacing) {
+        spacing = docEl(tc, "spacing");
+        pPr.appendChild(spacing);
       }
-      ts[0].textContent = text;
-      ts[0].setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
-      for (let i = 1; i < ts.length; i++) ts[i].textContent = "";
+      spacing.setAttributeNS(W, "w:before", "0");
+      spacing.setAttributeNS(W, "w:after", "0");
+      spacing.setAttributeNS(W, "w:line", "240");
+      spacing.setAttributeNS(W, "w:lineRule", "auto");
+      const run = docEl(tc, "r");
+      const t = docEl(tc, "t");
+      if (text) t.setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
+      t.textContent = text || "";
+      run.appendChild(t);
+      p.appendChild(run);
     }
     function docEl(tc, tag) { return tc.ownerDocument.createElementNS(W, "w:" + tag); }
     function mark(value, option) { return value === option ? option + " [X]" : option; }
