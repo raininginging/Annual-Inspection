@@ -582,18 +582,14 @@
       p.appendChild(run);
     }
     function docEl(tc, tag) { return tc.ownerDocument.createElementNS(W, "w:" + tag); }
-    function mark(value, option) { return value === option ? option + " [X]" : option; }
-    function yn(value) {
-      if (!value) return "YES / NO";
-      return `${mark(value, "YES")}    ${mark(value, "NO")}`;
-    }
+    function chosen(value) { return value || ""; }
 
     function fillDocument(doc, r) {
       const tables = nodes(doc.documentElement, "tbl");
       fillHeader(tables[0], r);
       fillRated(tables[1], r, EXTERIOR);
-      setPair(tables[1], "Septic- Rise exists?", "Septic rise: " + yn(r.septicRise), r.septicComment ? "Comments: " + r.septicComment : "Comments:");
-      setPair(tables[1], "Dead Bolts Installed", "Dead bolts: " + yn(r.deadbolts), r.deadboltLocation ? "If no, location: " + r.deadboltLocation : "If No, Add Location:");
+      setPair(tables[1], "Septic- Rise exists?", chosen(r.septicRise), r.septicComment ? "Comments: " + r.septicComment : "Comments:");
+      setPair(tables[1], "Dead Bolts Installed", chosen(r.deadbolts), r.deadboltLocation ? "If no, location: " + r.deadboltLocation : "If No, Add Location:");
       fillRated(tables[2], r, INTERIOR);
       fillInsulation(tables[3], r);
       fillRated(tables[3], r, PLUMBING);
@@ -601,7 +597,7 @@
       fillElectrical(tables[4], r);
       fillRated(tables[5], r, VENTS);
       fillAppliances(tables[5], r);
-      if (tables[6]) setCellText(nodes(tables[6], "tc")[0], "Notify Program Officer ASAP:     " + yn(r.notify));
+      if (tables[6]) setCellText(nodes(tables[6], "tc")[0], "Notify Program Officer ASAP: " + chosen(r.notify));
       if (tables[7]) setCellText(nodes(tables[7], "tc")[0], "Miscellaneous: " + (r.miscellaneous || ""));
       nodes(doc.documentElement, "p").forEach(p => {
         const text = nodes(p, "t").map(t => t.textContent || "").join("");
@@ -626,17 +622,16 @@
       setCellText(cells(5)[0], "Daytime Phone #: " + r.phoneDay);
       setCellText(cells(5)[1], "Email: " + r.email);
       setCellText(cells(6)[0], "Other Phone #: " + r.phoneOther);
-      setCellText(cells(6)[1], "Update Septic Services: " + yn(r.septicUpdate));
+      setCellText(cells(6)[1], "Update Septic Services: " + chosen(r.septicUpdate));
       setCellText(cells(7)[0], `# of Occupants: Adults ${r.adults || "____"} Kids ${r.kids || "____"}`);
       setCellText(cells(8)[0], `# of Pets: ${r.pets || "____"} Comments: ${r.petComments || ""}`);
       setCellText(cells(9)[0], "Address of the unit: " + [r.apt, r.street, r.municipality].filter(Boolean).join(", ") + "    Project No: " + r.projectNo);
       setCellText(cells(10)[0], "Apt. / Site #: " + r.apt);
       setCellText(cells(10)[1], "Street # and Name: " + r.street);
       setCellText(cells(10)[2], "Municipality: " + r.municipality);
-      const type = r.houseType === "Other" && r.houseOther ? "Other: " + r.houseOther : (r.houseType || "");
-      setCellText(cells(11)[0], "Type of House: " + ["Mini-home","Bungalow","Single Unit","Duplex","Other"].map(opt => opt === r.houseType ? opt + " [X]" : opt).join("   ") + (r.houseOther ? "  " + r.houseOther : ""));
-      setCellText(cells(12)[0], "Basement: " + yn(r.basement));
-      setCellText(cells(12)[1], "If Yes, Type: " + ["Crawl Space","Full Basement"].map(opt => opt === r.basementType ? opt + " [X]" : opt).join("   "));
+      setCellText(cells(11)[0], "Type of House: " + chosen(r.houseType === "Other" && r.houseOther ? r.houseOther : r.houseType));
+      setCellText(cells(12)[0], "Basement: " + chosen(r.basement));
+      setCellText(cells(12)[1], "If Yes, Type: " + chosen(r.basementType));
       setCellText(cells(13)[0], "NB Power Meter #: " + r.meter);
     }
     function fillRated(table, r, names) {
@@ -668,11 +663,11 @@
       nodes(table, "tr").forEach(tr => {
         const cells = nodes(tr, "tc");
         if (cellText(cells[0]) === "Basement") {
-          setCellText(cells[1], ["8 ft","4 ft down"].map(opt => opt === r.insulDepth ? opt + " [X]" : opt).join("     "));
+          setCellText(cells[1], chosen(r.insulDepth), true);
           setCellText(cells[2], "Type: " + (r.insulType || ""));
         }
         if (cellText(cells[0]) === "Attic") {
-          setCellText(cells[1], ["Fiberglass","Loose"].map(opt => opt === r.attic ? opt + " [X]" : opt).join("     "));
+          setCellText(cells[1], chosen(r.attic), true);
           setCellText(cells[2], "Conditions: " + (r.atticConditions || ""));
         }
       });
@@ -681,16 +676,16 @@
       nodes(table, "tr").forEach(tr => {
         const cells = nodes(tr, "tc");
         const label = cellText(cells[0]);
-        if (label === "Shower Walls" && cells.length > 4) setCellText(cells[4], "Type: " + ["Ceramic","Enclosure"].map(opt => opt === r.showerType ? opt + " [X]" : opt).join("   "));
+        if (label === "Shower Walls" && cells.length > 4) setCellText(cells[4], "Type: " + chosen(r.showerType));
         if (label === "Hot Water Tank" && cells.length > 4) setCellText(cells[4], "Capacity: " + (r.hwtCapacity || ""));
         if (cellText(cells[cells.length - 1]).startsWith("Date:")) setCellText(cells[cells.length - 1], "Date: " + (r.hwtDate || ""));
-        if (cellText(cells[cells.length - 1]).includes("Leased")) setCellText(cells[cells.length - 1], ["Leased","Owned"].map(opt => opt === r.hwtOwn ? opt + " [X]" : opt).join("     "));
+        if (cellText(cells[cells.length - 1]).includes("Leased") || cellText(cells[cells.length - 1]) === "Leased" || cellText(cells[cells.length - 1]) === "Owned") setCellText(cells[cells.length - 1], chosen(r.hwtOwn), true);
         if (cellText(cells[cells.length - 1]).startsWith("Make:")) setCellText(cells[cells.length - 1], "Make: " + (r.hwtMake || ""));
         if (label.startsWith("Water Leaks")) {
-          setCellText(cells[0], "Water Leaks: " + yn(r.leaks));
+          setCellText(cells[0], "Water Leaks: " + chosen(r.leaks));
           if (cells[1]) setCellText(cells[1], "If Yes Add Location: " + (r.leakLocation || ""));
         }
-        if (label.startsWith("Water Test")) setCellText(cells[0], "Water Test Collected: " + yn(r.waterTest));
+        if (label.startsWith("Water Test")) setCellText(cells[0], "Water Test Collected: " + chosen(r.waterTest));
       });
     }
     function fillElectrical(table, r) {
@@ -721,7 +716,7 @@
           setCellText(cells[1], s.status === "Good" ? "X" : "", true);
           setCellText(cells[2], s.status === "Replace" ? "X" : "", true);
           setCellText(cells[3], "Location: " + [s.status === "NA" ? "NA" : "", s.location, s.comment].filter(Boolean).join(" — "));
-          const rest = ["Type: " + (s.type || ""), "Expired Date: " + (s.expired || ""), "Battery Charged: " + yn(s.battery), "Tested Unit: " + yn(s.tested)];
+          const rest = ["Type: " + (s.type || ""), "Expired Date: " + (s.expired || ""), "Battery Charged: " + chosen(s.battery), "Tested Unit: " + chosen(s.tested)];
           for (let n = 0; n < 4; n++) {
             const sib = rows[ri + 1 + n];
             if (!sib) break;
@@ -737,7 +732,7 @@
         const cells = nodes(tr, "tc");
         const a = cellText(cells[0]);
         if (a.startsWith("Visible Mold")) {
-          setCellText(cells[1], yn(r.mold));
+          setCellText(cells[1], chosen(r.mold), true);
           if (cells[2]) setCellText(cells[2], "If yes Add Location: " + (r.moldLocation || ""));
         }
         if (a.startsWith("Serial")) { setCellText(cells[0], "Serial #: " + r.ovenSerial); setCellText(cells[1], "Serial #: " + r.fridgeSerial); }
